@@ -28,6 +28,7 @@ const weatherConditionMap: Record<string, WeatherType> = {
   sunny: "sunny",
   rain: "rain",
   typhoon: "typhoon",
+  pending: "sunny", // Default to sunny for pending markets
 };
 
 const weatherStatusMap: Record<string, string> = {
@@ -39,6 +40,7 @@ const weatherStatusMap: Record<string, string> = {
   sunny: "晴朗",
   rain: "小雨",
   typhoon: "台风预警",
+  pending: "开放预测",
 };
 
 const weatherIcons: Record<WeatherType, React.ReactNode> = {
@@ -275,30 +277,6 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
           </div>
         )}
 
-        {/* Legend - Scaled up 1.2x, positioned closer to map edge */}
-        <div 
-          className="absolute glass rounded-xl p-4 shadow-soft"
-          style={{
-            bottom: "12%",
-            left: "8%",
-            transform: "scale(1.2)",
-            transformOrigin: "bottom left",
-          }}
-        >
-          <p className="text-xs font-medium text-foreground mb-2">图例</p>
-          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
-            {(Object.keys(weatherLabels) as WeatherType[]).map((weather) => (
-              <div key={weather} className="flex items-center gap-2">
-                <div
-                  className={`w-3 h-3 rounded-sm ${weatherBgColors[weather]}`}
-                />
-                <span className="text-[10px] text-muted-foreground">
-                  {weatherLabels[weather]}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
       </div>
     </div>
   );
