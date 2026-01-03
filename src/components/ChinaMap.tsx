@@ -16,8 +16,19 @@ export interface CityHotspot {
   position: { top: string; left: string };
 }
 
-// 10 city hotspots with precise agricultural data
+// 10 city hotspots with precise geographic coordinates
 const cityHotspots: CityHotspot[] = [
+  {
+    id: "hulunbuir",
+    city: "呼伦贝尔",
+    province: "内蒙古",
+    shortProvince: "蒙",
+    weather: "sunny",
+    weatherStatus: "晴朗",
+    crop: "春小麦",
+    poolSize: 210000,
+    position: { top: "15%", left: "78%" },
+  },
   {
     id: "suihua",
     city: "绥化",
@@ -27,62 +38,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "玉米/大豆",
     poolSize: 380000,
-    position: { top: "18%", left: "78%" },
-  },
-  {
-    id: "zhumadian",
-    city: "驻马店",
-    province: "河南",
-    shortProvince: "豫",
-    weather: "drought",
-    weatherStatus: "干旱",
-    crop: "小麦/玉米",
-    poolSize: 456000,
-    position: { top: "42%", left: "58%" },
-  },
-  {
-    id: "weifang",
-    city: "潍坊",
-    province: "山东",
-    shortProvince: "鲁",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "蔬菜/小麦",
-    poolSize: 320000,
-    position: { top: "34%", left: "66%" },
-  },
-  {
-    id: "fuyang",
-    city: "阜阳",
-    province: "安徽",
-    shortProvince: "皖",
-    weather: "rain",
-    weatherStatus: "小雨",
-    crop: "小麦/水稻",
-    poolSize: 275000,
-    position: { top: "44%", left: "62%" },
-  },
-  {
-    id: "changde",
-    city: "常德",
-    province: "湖南",
-    shortProvince: "湘",
-    weather: "flood",
-    weatherStatus: "暴雨",
-    crop: "水稻",
-    poolSize: 198000,
-    position: { top: "56%", left: "54%" },
-  },
-  {
-    id: "chengdu",
-    city: "成都",
-    province: "四川",
-    shortProvince: "川",
-    weather: "rain",
-    weatherStatus: "小雨",
-    crop: "水稻",
-    poolSize: 156000,
-    position: { top: "50%", left: "38%" },
+    position: { top: "22%", left: "85%" },
   },
   {
     id: "shijiazhuang",
@@ -93,18 +49,62 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "小麦",
     poolSize: 290000,
-    position: { top: "32%", left: "58%" },
+    position: { top: "36%", left: "70%" },
   },
   {
-    id: "hulunbuir",
-    city: "呼伦贝尔",
-    province: "内蒙古",
-    shortProvince: "蒙",
+    id: "weifang",
+    city: "潍坊",
+    province: "山东",
+    shortProvince: "鲁",
     weather: "sunny",
     weatherStatus: "晴朗",
-    crop: "春小麦",
-    poolSize: 210000,
-    position: { top: "14%", left: "68%" },
+    crop: "蔬菜/小麦",
+    poolSize: 320000,
+    position: { top: "38%", left: "76%" },
+  },
+  {
+    id: "zhumadian",
+    city: "驻马店",
+    province: "河南",
+    shortProvince: "豫",
+    weather: "drought",
+    weatherStatus: "干旱",
+    crop: "小麦/玉米",
+    poolSize: 456000,
+    position: { top: "48%", left: "68%" },
+  },
+  {
+    id: "fuyang",
+    city: "阜阳",
+    province: "安徽",
+    shortProvince: "皖",
+    weather: "rain",
+    weatherStatus: "小雨",
+    crop: "小麦/水稻",
+    poolSize: 275000,
+    position: { top: "52%", left: "73%" },
+  },
+  {
+    id: "chengdu",
+    city: "成都",
+    province: "四川",
+    shortProvince: "川",
+    weather: "rain",
+    weatherStatus: "小雨",
+    crop: "水稻",
+    poolSize: 156000,
+    position: { top: "60%", left: "48%" },
+  },
+  {
+    id: "changde",
+    city: "常德",
+    province: "湖南",
+    shortProvince: "湘",
+    weather: "flood",
+    weatherStatus: "暴雨",
+    crop: "水稻",
+    poolSize: 198000,
+    position: { top: "65%", left: "62%" },
   },
   {
     id: "shangrao",
@@ -115,7 +115,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻",
     poolSize: 165000,
-    position: { top: "54%", left: "64%" },
+    position: { top: "68%", left: "74%" },
   },
   {
     id: "zhanjiang",
@@ -126,16 +126,16 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "台风预警",
     crop: "糖蔗/水稻",
     poolSize: 145000,
-    position: { top: "74%", left: "52%" },
+    position: { top: "88%", left: "65%" },
   },
 ];
 
 const weatherIcons: Record<WeatherType, React.ReactNode> = {
-  sunny: <Sun className="w-4 h-4" />,
-  rain: <CloudRain className="w-4 h-4" />,
-  drought: <Flame className="w-4 h-4" />,
-  flood: <Waves className="w-4 h-4" />,
-  typhoon: <Wind className="w-4 h-4" />,
+  sunny: <Sun className="w-3 h-3" />,
+  rain: <CloudRain className="w-3 h-3" />,
+  drought: <Flame className="w-3 h-3" />,
+  flood: <Waves className="w-3 h-3" />,
+  typhoon: <Wind className="w-3 h-3" />,
 };
 
 const weatherLabels: Record<WeatherType, string> = {
@@ -147,11 +147,11 @@ const weatherLabels: Record<WeatherType, string> = {
 };
 
 const weatherBgColors: Record<WeatherType, string> = {
-  sunny: "bg-weather-sunny/60",
-  rain: "bg-weather-rain/60",
-  drought: "bg-weather-drought/60",
-  flood: "bg-weather-flood/60",
-  typhoon: "bg-weather-typhoon/60",
+  sunny: "bg-weather-sunny",
+  rain: "bg-weather-rain",
+  drought: "bg-weather-drought",
+  flood: "bg-weather-flood",
+  typhoon: "bg-weather-typhoon",
 };
 
 const weatherBorderColors: Record<WeatherType, string> = {
@@ -160,6 +160,14 @@ const weatherBorderColors: Record<WeatherType, string> = {
   drought: "border-weather-drought",
   flood: "border-weather-flood",
   typhoon: "border-weather-typhoon",
+};
+
+const weatherPingColors: Record<WeatherType, string> = {
+  sunny: "bg-weather-sunny/40",
+  rain: "bg-weather-rain/40",
+  drought: "bg-weather-drought/40",
+  flood: "bg-weather-flood/40",
+  typhoon: "bg-weather-typhoon/40",
 };
 
 // For backwards compatibility with BettingModal
@@ -203,32 +211,42 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
           draggable={false}
         />
 
-        {/* City Hotspots */}
+        {/* City Hotspots - Smaller with pulse animation */}
         {cityHotspots.map((city) => (
-          <button
+          <div
             key={city.id}
-            className={`absolute w-12 h-12 md:w-14 md:h-14 rounded-full cursor-pointer
-              transition-all duration-300 border-2 backdrop-blur-sm
-              ${weatherBgColors[city.weather]} ${weatherBorderColors[city.weather]}
-              hover:scale-110 hover:shadow-lg hover:shadow-${city.weather}/30
-              flex items-center justify-center
-            `}
+            className="absolute"
             style={{
               top: city.position.top,
               left: city.position.left,
               transform: "translate(-50%, -50%)",
             }}
-            onMouseEnter={() => setHoveredHotspot(city)}
-            onMouseLeave={() => setHoveredHotspot(null)}
-            onClick={() => handleCityClick(city)}
-            aria-label={`${city.city} - ${city.weatherStatus}`}
           >
-            {city.weather === "sunny" && <Sun className="w-5 h-5 md:w-6 md:h-6 text-foreground/80" />}
-            {city.weather === "rain" && <CloudRain className="w-5 h-5 md:w-6 md:h-6 text-foreground/80" />}
-            {city.weather === "drought" && <Flame className="w-5 h-5 md:w-6 md:h-6 text-foreground/80" />}
-            {city.weather === "flood" && <Waves className="w-5 h-5 md:w-6 md:h-6 text-foreground/80" />}
-            {city.weather === "typhoon" && <Wind className="w-5 h-5 md:w-6 md:h-6 text-foreground/80" />}
-          </button>
+            {/* Ping animation layer */}
+            <span
+              className={`absolute inset-0 w-7 h-7 rounded-full ${weatherPingColors[city.weather]} animate-[ping-slow_3s_ease-in-out_infinite]`}
+            />
+            
+            {/* Main hotspot button */}
+            <button
+              className={`relative w-7 h-7 rounded-full cursor-pointer
+                transition-all duration-300 border-[1.5px] backdrop-blur-sm
+                ${weatherBgColors[city.weather]} ${weatherBorderColors[city.weather]}
+                hover:scale-125 hover:shadow-lg
+                flex items-center justify-center z-10
+              `}
+              onMouseEnter={() => setHoveredHotspot(city)}
+              onMouseLeave={() => setHoveredHotspot(null)}
+              onClick={() => handleCityClick(city)}
+              aria-label={`${city.city} - ${city.weatherStatus}`}
+            >
+              {city.weather === "sunny" && <Sun className="w-3.5 h-3.5 text-foreground/80" />}
+              {city.weather === "rain" && <CloudRain className="w-3.5 h-3.5 text-foreground/80" />}
+              {city.weather === "drought" && <Flame className="w-3.5 h-3.5 text-foreground/80" />}
+              {city.weather === "flood" && <Waves className="w-3.5 h-3.5 text-foreground/80" />}
+              {city.weather === "typhoon" && <Wind className="w-3.5 h-3.5 text-foreground/80" />}
+            </button>
+          </div>
         ))}
 
         {/* Tooltip */}
@@ -236,7 +254,7 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
           <div
             className="absolute z-50 pointer-events-none animate-fade-in"
             style={{
-              top: `calc(${hoveredHotspot.position.top} - 8%)`,
+              top: `calc(${hoveredHotspot.position.top} - 6%)`,
               left: hoveredHotspot.position.left,
               transform: "translateX(-50%)",
             }}
@@ -244,22 +262,12 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
             <div className="glass rounded-xl p-3 shadow-medium min-w-[200px]">
               <div className="flex items-center gap-2 mb-2">
                 <div
-                  className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    hoveredHotspot.weather === "sunny"
-                      ? "bg-weather-sunny"
-                      : hoveredHotspot.weather === "rain"
-                      ? "bg-weather-rain"
-                      : hoveredHotspot.weather === "drought"
-                      ? "bg-weather-drought"
-                      : hoveredHotspot.weather === "flood"
-                      ? "bg-weather-flood"
-                      : "bg-weather-typhoon"
-                  }`}
+                  className={`w-7 h-7 rounded-lg flex items-center justify-center ${weatherBgColors[hoveredHotspot.weather]}`}
                 >
                   {weatherIcons[hoveredHotspot.weather]}
                 </div>
                 <div>
-                  <p className="font-semibold text-foreground">
+                  <p className="font-semibold text-foreground text-sm">
                     {hoveredHotspot.city} ({hoveredHotspot.shortProvince})
                   </p>
                   <p className="text-xs text-muted-foreground">
@@ -285,24 +293,22 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
           </div>
         )}
 
-        {/* Legend */}
-        <div className="absolute bottom-4 left-4 glass rounded-xl p-3 shadow-soft">
+        {/* Legend - Scaled up 1.2x, positioned closer to map edge */}
+        <div 
+          className="absolute glass rounded-xl p-4 shadow-soft"
+          style={{
+            bottom: "12%",
+            left: "8%",
+            transform: "scale(1.2)",
+            transformOrigin: "bottom left",
+          }}
+        >
           <p className="text-xs font-medium text-foreground mb-2">图例</p>
           <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
             {(Object.keys(weatherLabels) as WeatherType[]).map((weather) => (
               <div key={weather} className="flex items-center gap-2">
                 <div
-                  className={`w-3 h-3 rounded-sm ${
-                    weather === "sunny"
-                      ? "bg-weather-sunny"
-                      : weather === "rain"
-                      ? "bg-weather-rain"
-                      : weather === "drought"
-                      ? "bg-weather-drought"
-                      : weather === "flood"
-                      ? "bg-weather-flood"
-                      : "bg-weather-typhoon"
-                  }`}
+                  className={`w-3 h-3 rounded-sm ${weatherBgColors[weather]}`}
                 />
                 <span className="text-[10px] text-muted-foreground">
                   {weatherLabels[weather]}
