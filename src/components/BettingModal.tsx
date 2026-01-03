@@ -49,6 +49,8 @@ const BettingModal = ({
   const potentialWin = numAmount * odds;
   const yesPool = 65;
   const noPool = 35;
+  const totalPool = 12580; // Total USDC in pool
+  const currentWeather = province.weather;
   const handleConfirm = () => {
     // Simulate bet confirmation
     onOpenChange(false);
@@ -62,9 +64,26 @@ const BettingModal = ({
               {province.crop}
             </span>
           </DialogTitle>
-          <p className="text-sm text-muted-foreground">
-            目标日期：<span className="font-medium text-foreground">2026年1月11日</span>
-          </p>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground">
+            <span>目标日期：<span className="font-medium text-foreground">2026年1月11日</span></span>
+            <span className="text-muted-foreground">•</span>
+            <span className="flex items-center gap-1">
+              当前天气：
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium
+                ${currentWeather === "sunny" ? "bg-weather-sunny/20 text-weather-sunny" : 
+                  currentWeather === "rain" ? "bg-weather-rain/20 text-weather-rain" : 
+                  currentWeather === "drought" ? "bg-weather-drought/20 text-weather-drought" : 
+                  currentWeather === "flood" ? "bg-weather-flood/20 text-weather-flood" : 
+                  "bg-weather-typhoon/20 text-weather-typhoon"}`}>
+                {currentWeather === "sunny" && <Sun className="w-3 h-3" />}
+                {currentWeather === "rain" && <CloudRain className="w-3 h-3" />}
+                {currentWeather === "drought" && <Flame className="w-3 h-3" />}
+                {currentWeather === "flood" && <Waves className="w-3 h-3" />}
+                {currentWeather === "typhoon" && <Wind className="w-3 h-3" />}
+                {weatherOptions.find(w => w.type === currentWeather)?.label}
+              </span>
+            </span>
+          </div>
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
@@ -125,10 +144,16 @@ const BettingModal = ({
 
           {/* Market Preview Card */}
           <div className="bg-muted/50 rounded-xl p-4 border border-border">
-            <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-accent" />
               <span className="text-sm font-medium">市场预览</span>
             </div>
+            <div className="text-right">
+              <p className="text-xs text-muted-foreground">总奖池</p>
+              <p className="text-sm font-semibold text-foreground">${totalPool.toLocaleString()} USDC</p>
+            </div>
+          </div>
 
             {/* Pool Distribution Bar */}
             <div className="mb-3">
@@ -138,11 +163,11 @@ const BettingModal = ({
               </div>
               <div className="h-2 rounded-full overflow-hidden flex bg-background">
                 <div className="bg-accent transition-all" style={{
-                width: `${yesPool}%`
-              }} />
+                  width: `${yesPool}%`
+                }} />
                 <div className="bg-destructive transition-all" style={{
-                width: `${noPool}%`
-              }} />
+                  width: `${noPool}%`
+                }} />
               </div>
             </div>
 
