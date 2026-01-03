@@ -30,9 +30,10 @@ const WalletButton = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const handleConnect = async () => {
-    await connect();
-    if (error) {
-      toast.error(error);
+    try {
+      await connect();
+    } catch (err: any) {
+      toast.error(err.message || "连接钱包失败");
     }
   };
 

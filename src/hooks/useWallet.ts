@@ -133,6 +133,10 @@ export const useWallet = (): UseWalletReturn => {
         method: 'eth_requestAccounts',
       });
 
+      if (!accounts || accounts.length === 0) {
+        throw new Error('未获取到钱包地址');
+      }
+
       const address = accounts[0];
       const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
 
@@ -148,15 +152,12 @@ export const useWallet = (): UseWalletReturn => {
         chainId,
         isCorrectNetwork,
         isConnecting: false,
+        error: null,
       }));
 
       // Fetch balances
       await fetchBalances(address);
 
-      // If not on Sepolia, prompt to switch
-      if (!isCorrectNetwork) {
-        await switchToSepolia();
-      }
     } catch (error: any) {
       console.error('Connection error:', error);
       setState(prev => ({
