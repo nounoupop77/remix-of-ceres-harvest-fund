@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2, Snowflake, Thermometer, CloudLightning } from "lucide-react";
+import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2, Snowflake, Thermometer, CloudLightning, Wallet, AlertTriangle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import AnimatedCounter from "./AnimatedCounter";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useWallet } from "@/hooks/useWallet";
 import type { TrendingMarket } from "./TrendingMarkets";
 
 interface BettingModalProps {
@@ -58,6 +59,10 @@ const weatherIcons: Record<string, React.ReactNode> = {
   storm: <CloudLightning className="w-4 h-4" />,
 };
 
+// Contract address - update this after deploying the contract
+const BETTING_CONTRACT_ADDRESS = ""; // TODO: Set after contract deployment
+const CHARITY_WALLET_ADDRESS = ""; // TODO: Set the charity wallet address
+
 const BettingModal = ({
   market,
   open,
@@ -67,13 +72,16 @@ const BettingModal = ({
   const [selectedWeather, setSelectedWeather] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [paymentStep, setPaymentStep] = useState<"input" | "wallet" | "processing" | "complete">("input");
   const { toast } = useToast();
+  const wallet = useWallet();
 
   // Reset selected weather when modal opens
   useEffect(() => {
     if (open) {
       setSelectedWeather("");
       setAmount("");
+      setPaymentStep("input");
     }
   }, [open]);
 
@@ -106,10 +114,6 @@ const BettingModal = ({
   const handleConfirm = async () => {
     if (numAmount <= 0 || !selectedWeather) return;
 
-    setIsSubmitting(true);
-
-    const stance = isYesBet ? "yes" : "no";
-
     // Check if user is logged in
     const { data: { user } } = await supabase.auth.getUser();
     
@@ -119,59 +123,133 @@ const BettingModal = ({
         description: "您需要登录后才能下注",
         variant: "destructive",
       });
-      setIsSubmitting(false);
       return;
     }
 
-    // Create bet record
-    const { error: betError } = await supabase.from("bets").insert({
-      user_id: user.id,
-      market_id: market.id,
-      position: stance,
-      amount: numAmount,
-    });
+    // Check wallet connection
+    if (!wallet.isConnected) {
+      setPaymentStep("wallet");
+      return;
+    }
 
-    if (betError) {
+    // Check network
+    if (!wallet.isCorrectNetwork) {
+      toast({
+        title: "网络错误",
+        description: "请切换到 Sepolia 测试网",
+        variant: "destructive",
+      });
+      await wallet.switchToSepolia();
+      return;
+    }
+
+    // Check USDC balance
+    const usdcBalance = parseFloat(wallet.usdcBalance || "0");
+    if (usdcBalance < numAmount) {
+      toast({
+        title: "余额不足",
+        description: `您的 USDC 余额为 ${usdcBalance}，不足以支付 ${numAmount} USDC`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setPaymentStep("processing");
+
+    const stance = isYesBet ? "yes" : "no";
+
+    try {
+      // Transfer USDC to charity wallet (1%)
+      // For now, we transfer to a placeholder address since contract isn't deployed
+      // In production, this would go through the smart contract
+      
+      // TODO: When contract is deployed, use:
+      // const success = await wallet.approveUSDC(BETTING_CONTRACT_ADDRESS, numAmount.toString());
+      // if (!success) throw new Error("USDC 授权失败");
+      
+      // For demo, we'll simulate the blockchain transaction
+      // and just record in database
+      
+      // Create bet record
+      const { error: betError } = await supabase.from("bets").insert({
+        user_id: user.id,
+        market_id: market.id,
+        position: stance,
+        amount: numAmount,
+      });
+
+      if (betError) {
+        throw new Error(betError.message);
+      }
+
+      // Update market pool
+      const poolUpdate = stance === "yes" 
+        ? { yes_pool: yesPool + numAmount }
+        : { no_pool: noPool + numAmount };
+      
+      await supabase.from("markets").update(poolUpdate).eq("id", market.id);
+
+      // Add to charity pool (1% of bet)
+      const charityAmount = numAmount * 0.01;
+      await supabase.from("charity_pool").insert({
+        amount: charityAmount,
+        market_id: market.id,
+      });
+
+      // Update market charity contribution
+      await supabase.from("markets").update({
+        charity_contribution: market.yes_pool + market.no_pool + numAmount
+      }).eq("id", market.id);
+
+      // Update user profile with wallet address if not set
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("wallet_address")
+        .eq("user_id", user.id)
+        .single();
+
+      if (!profile?.wallet_address && wallet.address) {
+        await supabase
+          .from("profiles")
+          .update({ wallet_address: wallet.address })
+          .eq("user_id", user.id);
+      }
+
+      setPaymentStep("complete");
+
+      toast({
+        title: "下注成功！",
+        description: `已下注 $${numAmount} USDC，预测天气为「${weatherLabels[selectedWeather]}」`,
+      });
+
+      if (onBetConfirm) {
+        onBetConfirm(numAmount);
+      }
+
+      setTimeout(() => {
+        setAmount("");
+        setIsSubmitting(false);
+        setPaymentStep("input");
+        onOpenChange(false);
+      }, 1500);
+
+    } catch (error: any) {
       toast({
         title: "下注失败",
-        description: betError.message,
+        description: error.message || "交易失败，请重试",
         variant: "destructive",
       });
       setIsSubmitting(false);
-      return;
+      setPaymentStep("input");
     }
+  };
 
-    // Update market pool
-    const poolUpdate = stance === "yes" 
-      ? { yes_pool: yesPool + numAmount }
-      : { no_pool: noPool + numAmount };
-    
-    await supabase.from("markets").update(poolUpdate).eq("id", market.id);
-
-    // Add to charity pool (1% of bet)
-    const charityAmount = numAmount * 0.01;
-    await supabase.from("charity_pool").insert({
-      amount: charityAmount,
-      market_id: market.id,
-    });
-
-    // Update market charity contribution
-    await supabase.from("markets").update({
-      charity_contribution: market.yes_pool + market.no_pool + numAmount
-    }).eq("id", market.id);
-
-    toast({
-      title: "下注成功！",
-      description: `已下注 $${numAmount} USDC，预测天气为「${weatherLabels[selectedWeather]}」`,
-    });
-
-    if (onBetConfirm) {
-      onBetConfirm(numAmount);
+  const handleConnectWallet = async () => {
+    await wallet.connect();
+    if (wallet.isConnected) {
+      setPaymentStep("input");
     }
-
-    setAmount("");
-    setIsSubmitting(false);
-    onOpenChange(false);
   };
 
   return (
@@ -336,19 +414,89 @@ const BettingModal = ({
             </div>
           </motion.div>
 
+          {/* Wallet Status */}
+          {wallet.isConnected && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-accent/10 rounded-xl p-3 border border-accent/30"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-accent animate-pulse" />
+                  <span className="text-sm font-medium text-accent">钱包已连接</span>
+                </div>
+                <span className="text-sm font-mono">{wallet.shortAddress}</span>
+              </div>
+              <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+                <span>USDC 余额：</span>
+                <span className="font-medium text-foreground">{wallet.usdcBalance || "0"} USDC</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Network Warning */}
+          {wallet.isConnected && !wallet.isCorrectNetwork && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-destructive/10 rounded-xl p-3 border border-destructive/30"
+            >
+              <div className="flex items-center gap-2 text-destructive mb-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="text-sm font-medium">请切换到 Sepolia 测试网</span>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="w-full"
+                onClick={() => wallet.switchToSepolia()}
+              >
+                切换网络
+              </Button>
+            </motion.div>
+          )}
+
           {/* Confirm Button */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-            <Button
-              onClick={handleConfirm}
-              disabled={numAmount <= 0 || !selectedWeather || isSubmitting}
-              className="w-full h-12 text-base font-semibold"
-              variant="default"
-            >
-              {isSubmitting ? (
+            {paymentStep === "wallet" ? (
+              <Button
+                onClick={handleConnectWallet}
+                className="w-full h-12 text-base font-semibold gap-2"
+                variant="default"
+              >
+                <Wallet className="w-5 h-5" />
+                连接 MetaMask 钱包
+              </Button>
+            ) : paymentStep === "processing" ? (
+              <Button
+                disabled
+                className="w-full h-12 text-base font-semibold"
+                variant="default"
+              >
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
-              ) : null}
-              {!selectedWeather ? "请先选择天气预测" : "确认下注 (Confirm Bet)"}
-            </Button>
+                处理中...
+              </Button>
+            ) : paymentStep === "complete" ? (
+              <Button
+                disabled
+                className="w-full h-12 text-base font-semibold bg-accent hover:bg-accent"
+                variant="default"
+              >
+                ✓ 下注成功
+              </Button>
+            ) : (
+              <Button
+                onClick={handleConfirm}
+                disabled={numAmount <= 0 || !selectedWeather || isSubmitting}
+                className="w-full h-12 text-base font-semibold"
+                variant="default"
+              >
+                {!selectedWeather ? "请先选择天气预测" : (
+                  wallet.isConnected ? "确认下注 (Confirm Bet)" : "连接钱包并下注"
+                )}
+              </Button>
+            )}
           </motion.div>
         </div>
       </DialogContent>

@@ -1,8 +1,9 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Wallet, Heart, History, Sprout, Shield } from "lucide-react";
+import { Heart, History, Sprout, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/AnimatedCounter";
+import WalletButton from "@/components/WalletButton";
 
 interface NavbarProps {
   onOpenCharity: () => void;
@@ -118,10 +119,7 @@ const Navbar = ({
             <History className="w-4 h-4" />
           </Button>
 
-          <Button variant="wallet" size="sm" className="gap-2">
-            <Wallet className="w-4 h-4" />
-            <span className="hidden sm:inline">连接钱包</span>
-          </Button>
+          <WalletButton />
         </div>
       </div>
     </motion.nav>
