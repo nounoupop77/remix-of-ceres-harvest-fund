@@ -330,6 +330,33 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
           </div>
         )}
 
+        {/* Weather Legend */}
+        <div className="absolute bottom-4 left-4 glass rounded-xl p-3 shadow-soft z-30">
+          <p className="text-xs font-semibold text-foreground mb-2">图例</p>
+          <div className="grid grid-cols-2 gap-x-4 gap-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-weather-sunny" />
+              <span className="text-xs text-foreground/80">晴天</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-weather-rain" />
+              <span className="text-xs text-foreground/80">小雨</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-weather-drought" />
+              <span className="text-xs text-foreground/80">干旱</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-weather-flood" />
+              <span className="text-xs text-foreground/80">暴雨/洪涝</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-weather-typhoon" />
+              <span className="text-xs text-foreground/80">台风</span>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   );
