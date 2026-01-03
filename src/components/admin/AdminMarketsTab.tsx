@@ -258,7 +258,7 @@ const AdminMarketsTab = () => {
               创建市场
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 {editingMarket ? "编辑市场" : "创建新市场"}
