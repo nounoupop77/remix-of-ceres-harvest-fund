@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Sun, CloudRain, Flame, Waves, Wind, Move } from "lucide-react";
+import { useState } from "react";
+import { Sun, CloudRain, Flame, Waves, Wind } from "lucide-react";
 import chinaFarmlandMap from "@/assets/china-farmland-map.png";
 
 export type WeatherType = "sunny" | "rain" | "drought" | "flood" | "typhoon";
@@ -28,7 +28,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "春小麦",
     poolSize: 210000,
-    position: { top: "12%", left: "76%" },
+    position: { top: "15.2%", left: "68.8%" },
   },
   {
     id: "harbin",
@@ -39,7 +39,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "水稻/大豆",
     poolSize: 420000,
-    position: { top: "20%", left: "86%" },
+    position: { top: "19.1%", left: "79.6%" },
   },
   {
     id: "suihua",
@@ -50,7 +50,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "玉米/大豆",
     poolSize: 380000,
-    position: { top: "24%", left: "84%" },
+    position: { top: "22.0%", left: "80.7%" },
   },
   {
     id: "changchun",
@@ -61,7 +61,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "玉米",
     poolSize: 350000,
-    position: { top: "28%", left: "82%" },
+    position: { top: "25.4%", left: "79.0%" },
   },
   // 华北/中原组 (旱地之魂)
   {
@@ -73,7 +73,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "小麦",
     poolSize: 290000,
-    position: { top: "38%", left: "71%" },
+    position: { top: "42.3%", left: "63.2%" },
   },
   {
     id: "weifang",
@@ -84,7 +84,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "蔬菜/小麦",
     poolSize: 320000,
-    position: { top: "40%", left: "78%" },
+    position: { top: "46.1%", left: "68.1%" },
   },
   {
     id: "dezhou",
@@ -95,7 +95,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "小麦/玉米",
     poolSize: 280000,
-    position: { top: "42%", left: "74%" },
+    position: { top: "44.8%", left: "66.5%" },
   },
   {
     id: "zhumadian",
@@ -106,7 +106,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "干旱",
     crop: "小麦/玉米",
     poolSize: 456000,
-    position: { top: "48%", left: "69%" },
+    position: { top: "52.8%", left: "66.4%" },
   },
   {
     id: "nanyang",
@@ -117,7 +117,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "小麦",
     poolSize: 310000,
-    position: { top: "51%", left: "66%" },
+    position: { top: "53.7%", left: "64.7%" },
   },
   {
     id: "fuyang",
@@ -128,7 +128,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "小麦/水稻",
     poolSize: 275000,
-    position: { top: "53%", left: "72%" },
+    position: { top: "54.4%", left: "68.1%" },
   },
   // 南方/长江组 (水田带)
   {
@@ -140,7 +140,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻",
     poolSize: 156000,
-    position: { top: "60%", left: "52%" },
+    position: { top: "61.5%", left: "50.2%" },
   },
   {
     id: "xiangyang",
@@ -151,7 +151,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "小麦/水稻",
     poolSize: 245000,
-    position: { top: "56%", left: "65%" },
+    position: { top: "59.4%", left: "61.1%" },
   },
   {
     id: "changde",
@@ -162,7 +162,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "暴雨",
     crop: "水稻",
     poolSize: 198000,
-    position: { top: "64%", left: "64%" },
+    position: { top: "66.2%", left: "63.4%" },
   },
   {
     id: "shangrao",
@@ -173,7 +173,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻",
     poolSize: 165000,
-    position: { top: "66%", left: "73%" },
+    position: { top: "66.1%", left: "71.2%" },
   },
   {
     id: "ganzhou",
@@ -184,7 +184,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻/脐橙",
     poolSize: 185000,
-    position: { top: "72%", left: "70%" },
+    position: { top: "72.2%", left: "68.2%" },
   },
   {
     id: "yancheng",
@@ -195,7 +195,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "水稻",
     poolSize: 295000,
-    position: { top: "52%", left: "78%" },
+    position: { top: "47.8%", left: "70.9%" },
   },
   // 华南/西部组
   {
@@ -207,7 +207,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "台风预警",
     crop: "糖蔗/水稻",
     poolSize: 145000,
-    position: { top: "86%", left: "66%" },
+    position: { top: "80.5%", left: "61.6%" },
   },
   {
     id: "maoming",
@@ -218,7 +218,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "台风预警",
     crop: "荔枝/水稻",
     poolSize: 135000,
-    position: { top: "83%", left: "68%" },
+    position: { top: "78.5%", left: "62.6%" },
   },
   {
     id: "nanning",
@@ -229,7 +229,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "甘蔗/水稻",
     poolSize: 175000,
-    position: { top: "80%", left: "61%" },
+    position: { top: "76.5%", left: "57.9%" },
   },
   {
     id: "akesu",
@@ -240,7 +240,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "棉花/苹果",
     poolSize: 220000,
-    position: { top: "42%", left: "22%" },
+    position: { top: "31.2%", left: "25.4%" },
   },
 ];
 
@@ -299,15 +299,8 @@ interface ChinaMapProps {
 
 const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
   const [hoveredHotspot, setHoveredHotspot] = useState<CityHotspot | null>(null);
-  const [devMode, setDevMode] = useState(false);
-  const [hotspotPositions, setHotspotPositions] = useState<Record<string, { top: string; left: string }>>(
-    () => Object.fromEntries(cityHotspots.map(c => [c.id, c.position]))
-  );
-  const containerRef = useRef<HTMLDivElement>(null);
-  const draggingRef = useRef<string | null>(null);
 
   const handleCityClick = (city: CityHotspot) => {
-    if (devMode) return; // Don't open modal in dev mode
     const province: Province = {
       id: city.id,
       name: city.city,
@@ -318,59 +311,10 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
     onProvinceClick(province);
   };
 
-  const handleMouseDown = (cityId: string) => {
-    if (!devMode) return;
-    draggingRef.current = cityId;
-  };
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (!devMode || !draggingRef.current || !containerRef.current) return;
-    
-    const rect = containerRef.current.getBoundingClientRect();
-    const left = ((e.clientX - rect.left) / rect.width) * 100;
-    const top = ((e.clientY - rect.top) / rect.height) * 100;
-    
-    setHotspotPositions(prev => ({
-      ...prev,
-      [draggingRef.current!]: { 
-        top: `${Math.max(0, Math.min(100, top)).toFixed(1)}%`, 
-        left: `${Math.max(0, Math.min(100, left)).toFixed(1)}%` 
-      }
-    }));
-  };
-
-  const handleMouseUp = () => {
-    if (draggingRef.current && devMode) {
-      // Output all positions to console
-      console.log("📍 当前热点坐标：");
-      console.log(JSON.stringify(hotspotPositions, null, 2));
-    }
-    draggingRef.current = null;
-  };
-
   return (
     <div className="relative w-full flex justify-center">
-      {/* Dev Mode Toggle */}
-      <button
-        onClick={() => setDevMode(!devMode)}
-        className={`absolute top-2 right-2 z-50 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5
-          ${devMode 
-            ? 'bg-accent text-accent-foreground shadow-lg' 
-            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
-          }`}
-      >
-        <Move className="w-3 h-3" />
-        {devMode ? '拖拽模式 ON' : '调试'}
-      </button>
-
       {/* Map Container */}
-      <div 
-        ref={containerRef}
-        className={`relative w-full max-w-[65rem] aspect-[4/3] ${devMode ? 'cursor-crosshair' : ''}`}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
-      >
+      <div className="relative w-full max-w-[65rem] aspect-[4/3]">
         {/* Background Map Image with warm paper filter */}
         <img
           src={chinaFarmlandMap}
@@ -381,64 +325,51 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
         />
 
         {/* City Hotspots - Smaller with pulse animation */}
-        {cityHotspots.map((city) => {
-          const pos = hotspotPositions[city.id] || city.position;
-          return (
-            <div
-              key={city.id}
-              className={`absolute ${devMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
-              style={{
-                top: pos.top,
-                left: pos.left,
-                transform: "translate(-50%, -50%)",
-              }}
-              onMouseDown={() => handleMouseDown(city.id)}
+        {cityHotspots.map((city) => (
+          <div
+            key={city.id}
+            className="absolute"
+            style={{
+              top: city.position.top,
+              left: city.position.left,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            {/* Ping animation layer */}
+            <span
+              className={`absolute inset-0 w-7 h-7 rounded-full ${weatherPingColors[city.weather]} animate-[ping-slow_3s_ease-in-out_infinite]`}
+            />
+            
+            {/* Main hotspot button with drop-shadow */}
+            <button
+              className={`relative w-7 h-7 rounded-full
+                transition-all duration-300 border-[1.5px] backdrop-blur-sm
+                ${weatherBgColors[city.weather]} ${weatherBorderColors[city.weather]}
+                hover:scale-125 hover:shadow-lg cursor-pointer
+                flex items-center justify-center z-10
+                drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]
+              `}
+              onMouseEnter={() => setHoveredHotspot(city)}
+              onMouseLeave={() => setHoveredHotspot(null)}
+              onClick={() => handleCityClick(city)}
+              aria-label={`${city.city} - ${city.weatherStatus}`}
             >
-              {/* Ping animation layer */}
-              {!devMode && (
-                <span
-                  className={`absolute inset-0 w-7 h-7 rounded-full ${weatherPingColors[city.weather]} animate-[ping-slow_3s_ease-in-out_infinite]`}
-                />
-              )}
-              
-              {/* Main hotspot button with drop-shadow */}
-              <button
-                className={`relative w-7 h-7 rounded-full
-                  transition-all duration-300 border-[1.5px] backdrop-blur-sm
-                  ${weatherBgColors[city.weather]} ${weatherBorderColors[city.weather]}
-                  ${devMode ? 'ring-2 ring-accent ring-offset-1' : 'hover:scale-125 hover:shadow-lg cursor-pointer'}
-                  flex items-center justify-center z-10
-                  drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]
-                `}
-                onMouseEnter={() => !devMode && setHoveredHotspot(city)}
-                onMouseLeave={() => setHoveredHotspot(null)}
-                onClick={() => handleCityClick(city)}
-                aria-label={`${city.city} - ${city.weatherStatus}`}
-              >
-                {city.weather === "sunny" && <Sun className="w-3.5 h-3.5 text-foreground/80" />}
-                {city.weather === "rain" && <CloudRain className="w-3.5 h-3.5 text-foreground/80" />}
-                {city.weather === "drought" && <Flame className="w-3.5 h-3.5 text-foreground/80" />}
-                {city.weather === "flood" && <Waves className="w-3.5 h-3.5 text-foreground/80" />}
-                {city.weather === "typhoon" && <Wind className="w-3.5 h-3.5 text-foreground/80" />}
-              </button>
-              
-              {/* Dev mode label */}
-              {devMode && (
-                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-mono bg-background/90 px-1 rounded whitespace-nowrap">
-                  {city.city}
-                </span>
-              )}
-            </div>
-          );
-        })}
+              {city.weather === "sunny" && <Sun className="w-3.5 h-3.5 text-foreground/80" />}
+              {city.weather === "rain" && <CloudRain className="w-3.5 h-3.5 text-foreground/80" />}
+              {city.weather === "drought" && <Flame className="w-3.5 h-3.5 text-foreground/80" />}
+              {city.weather === "flood" && <Waves className="w-3.5 h-3.5 text-foreground/80" />}
+              {city.weather === "typhoon" && <Wind className="w-3.5 h-3.5 text-foreground/80" />}
+            </button>
+          </div>
+        ))}
 
         {/* Tooltip */}
-        {hoveredHotspot && !devMode && (
+        {hoveredHotspot && (
           <div
             className="absolute z-50 pointer-events-none animate-fade-in"
             style={{
-              top: `calc(${hotspotPositions[hoveredHotspot.id]?.top || hoveredHotspot.position.top} - 6%)`,
-              left: hotspotPositions[hoveredHotspot.id]?.left || hoveredHotspot.position.left,
+              top: `calc(${hoveredHotspot.position.top} - 6%)`,
+              left: hoveredHotspot.position.left,
               transform: "translateX(-50%)",
             }}
           >
