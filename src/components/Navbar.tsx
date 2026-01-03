@@ -1,20 +1,34 @@
+import { motion } from "framer-motion";
 import { Wallet, Heart, History, Sprout } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import AnimatedCounter from "@/components/AnimatedCounter";
 
 interface NavbarProps {
   onOpenCharity: () => void;
   onOpenHistory: () => void;
+  charityPoolAmount?: number;
+  charityButtonRef?: React.RefObject<HTMLButtonElement>;
 }
 
-const Navbar = ({ onOpenCharity, onOpenHistory }: NavbarProps) => {
+const Navbar = ({ onOpenCharity, onOpenHistory, charityPoolAmount = 0, charityButtonRef }: NavbarProps) => {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50">
+    <motion.nav
+      initial={{ y: -100, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="fixed top-0 left-0 right-0 z-50 glass border-b border-border/50"
+    >
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         {/* Logo */}
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl gradient-earth flex items-center justify-center shadow-soft">
+          <motion.div
+            initial={{ rotate: -180, scale: 0 }}
+            animate={{ rotate: 0, scale: 1 }}
+            transition={{ duration: 0.8, delay: 0.2, type: "spring" }}
+            className="w-10 h-10 rounded-xl gradient-earth flex items-center justify-center shadow-soft"
+          >
             <Sprout className="w-5 h-5 text-primary-foreground" />
-          </div>
+          </motion.div>
           <div className="flex flex-col">
             <span className="font-serif text-xl font-semibold text-foreground">
               Ceres · 息壤
@@ -28,13 +42,23 @@ const Navbar = ({ onOpenCharity, onOpenHistory }: NavbarProps) => {
         {/* Right Actions */}
         <div className="flex items-center gap-2">
           <Button
+            ref={charityButtonRef}
             variant="ghost"
             size="sm"
             onClick={onOpenCharity}
-            className="hidden sm:flex gap-2 text-muted-foreground hover:text-foreground hover:bg-secondary"
+            className="hidden sm:flex gap-2 text-muted-foreground hover:text-foreground hover:bg-secondary relative overflow-hidden"
           >
             <Heart className="w-4 h-4" />
             <span>公益资金池</span>
+            {charityPoolAmount > 0 && (
+              <motion.span
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="ml-1 text-xs font-semibold text-accent"
+              >
+                <AnimatedCounter value={charityPoolAmount} prefix="$" suffix="K" />
+              </motion.span>
+            )}
           </Button>
 
           <Button
@@ -76,7 +100,7 @@ const Navbar = ({ onOpenCharity, onOpenHistory }: NavbarProps) => {
           </Button>
         </div>
       </div>
-    </nav>
+    </motion.nav>
   );
 };
 
