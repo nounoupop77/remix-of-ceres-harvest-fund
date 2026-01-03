@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2, Snowflake, Thermometer, CloudLightning, Wallet, AlertTriangle } from "lucide-react";
+import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2, Snowflake, Thermometer, CloudLightning, Wallet, AlertTriangle, History } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,6 +63,14 @@ const weatherIcons: Record<string, React.ReactNode> = {
 const BETTING_CONTRACT_ADDRESS = ""; // TODO: Set after contract deployment
 const CHARITY_WALLET_ADDRESS = ""; // TODO: Set the charity wallet address
 
+interface UserBetHistory {
+  id: string;
+  position: string;
+  amount: number;
+  created_at: string;
+  status: string;
+}
+
 const BettingModal = ({
   market,
   open,
@@ -74,8 +82,36 @@ const BettingModal = ({
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentStep, setPaymentStep] = useState<"input" | "wallet" | "processing" | "complete">("input");
+  const [userBets, setUserBets] = useState<UserBetHistory[]>([]);
+  const [isLoadingBets, setIsLoadingBets] = useState(false);
   const { toast } = useToast();
   const wallet = useWallet();
+
+  // Fetch user's betting history for this market
+  useEffect(() => {
+    const fetchUserBets = async () => {
+      if (!open || !market) return;
+      
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setUserBets([]);
+        return;
+      }
+
+      setIsLoadingBets(true);
+      const { data: bets } = await supabase
+        .from("bets")
+        .select("id, position, amount, created_at, status")
+        .eq("market_id", market.id)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      setUserBets(bets || []);
+      setIsLoadingBets(false);
+    };
+
+    fetchUserBets();
+  }, [open, market]);
 
   // Reset selected weather when modal opens
   useEffect(() => {
@@ -172,11 +208,13 @@ const BettingModal = ({
       // For demo, we'll simulate the blockchain transaction
       // and just record in database
       
-      // Create bet record
+      // Create bet record with weather prediction
+      // Position format: "weather_yesno" e.g., "sunny_yes", "rain_no"
+      const positionWithWeather = `${selectedWeather}_${stance}`;
       const { error: betError } = await supabase.from("bets").insert({
         user_id: user.id,
         market_id: market.id,
-        position: stance,
+        position: positionWithWeather,
         amount: numAmount,
       });
 
@@ -472,6 +510,57 @@ const BettingModal = ({
               <div className="flex justify-between mt-2 text-xs text-muted-foreground">
                 <span>USDC 余额：</span>
                 <span className="font-medium text-foreground">{wallet.usdcBalance || "0"} USDC</span>
+              </div>
+            </motion.div>
+          )}
+
+          {/* User Betting History for this Market */}
+          {userBets.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-muted/30 rounded-xl p-4 border border-border"
+            >
+              <div className="flex items-center gap-2 mb-3">
+                <History className="w-4 h-4 text-muted-foreground" />
+                <span className="text-sm font-medium">我在此地点的下注记录</span>
+              </div>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {isLoadingBets ? (
+                  <div className="flex justify-center py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  </div>
+                ) : (
+                  userBets.map((bet) => {
+                    const [weather, stance] = bet.position.split("_");
+                    const weatherLabel = weatherLabels[weather] || weather;
+                    const stanceLabel = stance === "yes" ? "是" : "否";
+                    return (
+                      <div key={bet.id} className="flex justify-between items-center text-xs p-2 bg-background/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          {weatherIcons[weather] || <Sun className="w-3 h-3" />}
+                          <span className="text-foreground">
+                            {weatherLabel} · <span className={stance === "yes" ? "text-accent" : "text-destructive"}>{stanceLabel}</span>
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-medium">${bet.amount}</span>
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] ${
+                            bet.status === 'pending' ? 'bg-yellow-500/20 text-yellow-700' :
+                            bet.status === 'won' ? 'bg-accent/20 text-accent' :
+                            'bg-destructive/20 text-destructive'
+                          }`}>
+                            {bet.status === 'pending' ? '进行中' : bet.status === 'won' ? '已赢' : '已输'}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <div className="flex justify-between mt-2 pt-2 border-t border-border text-xs text-muted-foreground">
+                <span>总下注次数：{userBets.length}</span>
+                <span>总金额：${userBets.reduce((sum, b) => sum + b.amount, 0)}</span>
               </div>
             </motion.div>
           )}

@@ -120,41 +120,41 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
         return;
       }
 
-      // Fetch all bets to determine most-bet weather per market
+      // Fetch all bets to determine most-bet weather per market (by amount, not count)
       const { data: betsData } = await supabase
         .from("bets")
-        .select("market_id, position");
+        .select("market_id, position, amount");
 
-      // Calculate most-bet weather for each market
-      const weatherCountByMarket: Record<string, Record<string, number>> = {};
+      // Calculate most-bet weather for each market based on total amount
+      const weatherAmountByMarket: Record<string, Record<string, number>> = {};
       
       if (betsData) {
         betsData.forEach((bet) => {
-          if (!weatherCountByMarket[bet.market_id]) {
-            weatherCountByMarket[bet.market_id] = {};
+          if (!weatherAmountByMarket[bet.market_id]) {
+            weatherAmountByMarket[bet.market_id] = {};
           }
           // Position contains weather type like "sunny_yes", "rain_no", etc.
           const weatherType = bet.position.split("_")[0];
-          weatherCountByMarket[bet.market_id][weatherType] = 
-            (weatherCountByMarket[bet.market_id][weatherType] || 0) + 1;
+          weatherAmountByMarket[bet.market_id][weatherType] = 
+            (weatherAmountByMarket[bet.market_id][weatherType] || 0) + bet.amount;
         });
       }
 
       const hotspots: MarketHotspot[] = marketsData.map((market) => {
-        // Find most-bet weather for this market
-        const weatherCounts = weatherCountByMarket[market.id] || {};
+        // Find most-bet weather for this market (by total amount)
+        const weatherAmounts = weatherAmountByMarket[market.id] || {};
         let mostBetWeather = "sunny"; // default
-        let maxCount = 0;
+        let maxAmount = 0;
         
-        Object.entries(weatherCounts).forEach(([weather, count]) => {
-          if (count > maxCount) {
-            maxCount = count;
+        Object.entries(weatherAmounts).forEach(([weather, amount]) => {
+          if (amount > maxAmount) {
+            maxAmount = amount;
             mostBetWeather = weather;
           }
         });
 
         const weatherType = weatherConditionMap[mostBetWeather] || "sunny";
-        const weatherStatus = maxCount > 0 
+        const weatherStatus = maxAmount > 0 
           ? weatherStatusMap[mostBetWeather] || "开放预测"
           : "开放预测";
 
