@@ -48,8 +48,8 @@ const Index = () => {
           </section>
 
           {/* China Map */}
-          <section className="container mx-auto px-4 -mt-4">
-            <div className="bg-card/50 rounded-3xl border border-border shadow-soft p-1 sm:p-2 backdrop-blur-sm">
+          <section className="container mx-auto px-4">
+            <div className="bg-card/50 rounded-3xl border border-border shadow-soft p-4 sm:p-6 backdrop-blur-sm">
               <ChinaMap onProvinceClick={handleProvinceClick} />
             </div>
           </section>
