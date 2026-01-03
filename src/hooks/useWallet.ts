@@ -49,6 +49,9 @@ interface UseWalletReturn extends WalletState {
   getUSDCContract: () => Promise<Contract | null>;
 }
 
+// Key for storing manual disconnect state
+const DISCONNECT_KEY = 'wallet_manually_disconnected';
+
 export const useWallet = (): UseWalletReturn => {
   const [state, setState] = useState<WalletState>({
     isConnected: false,
@@ -164,6 +167,9 @@ export const useWallet = (): UseWalletReturn => {
         error: null,
       }));
 
+      // Clear manual disconnect flag on successful connect
+      localStorage.removeItem(DISCONNECT_KEY);
+
       // Fetch balances
       await fetchBalances(address);
 
@@ -180,6 +186,8 @@ export const useWallet = (): UseWalletReturn => {
   }, [getProvider, fetchBalances]);
 
   const disconnect = useCallback(() => {
+    // Mark as manually disconnected to prevent auto-reconnect
+    localStorage.setItem(DISCONNECT_KEY, 'true');
     setState({
       isConnected: false,
       address: null,
@@ -301,24 +309,27 @@ export const useWallet = (): UseWalletReturn => {
     window.ethereum.on('accountsChanged', handleAccountsChanged);
     window.ethereum.on('chainChanged', handleChainChanged);
 
-    // Check if already connected
-    window.ethereum.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
-      if (accounts.length > 0) {
-        const address = accounts[0];
-        const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
-        window.ethereum.request({ method: 'eth_chainId' }).then((chainId: string) => {
-          setState(prev => ({
-            ...prev,
-            isConnected: true,
-            address,
-            shortAddress,
-            chainId,
-            isCorrectNetwork: chainId === SEPOLIA_CHAIN_ID,
-          }));
-          fetchBalances(address);
-        });
-      }
-    });
+    // Check if already connected (only if not manually disconnected)
+    const wasManuallyDisconnected = localStorage.getItem(DISCONNECT_KEY) === 'true';
+    if (!wasManuallyDisconnected) {
+      window.ethereum.request({ method: 'eth_accounts' }).then((accounts: string[]) => {
+        if (accounts.length > 0) {
+          const address = accounts[0];
+          const shortAddress = `${address.slice(0, 6)}...${address.slice(-4)}`;
+          window.ethereum.request({ method: 'eth_chainId' }).then((chainId: string) => {
+            setState(prev => ({
+              ...prev,
+              isConnected: true,
+              address,
+              shortAddress,
+              chainId,
+              isCorrectNetwork: chainId === SEPOLIA_CHAIN_ID,
+            }));
+            fetchBalances(address);
+          });
+        }
+      });
+    }
 
     return () => {
       window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
