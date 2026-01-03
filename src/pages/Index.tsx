@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { Helmet } from "react-helmet";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
@@ -6,23 +6,71 @@ import ChinaMap, { Province } from "@/components/ChinaMap";
 import BettingModal from "@/components/BettingModal";
 import CharityDrawer from "@/components/CharityDrawer";
 import HistoryDrawer from "@/components/HistoryDrawer";
-import TrendingMarkets from "@/components/TrendingMarkets";
+import TrendingMarkets, { TrendingMarket } from "@/components/TrendingMarkets";
 import FundParticle from "@/components/FundParticle";
 import BokehBackground from "@/components/BokehBackground";
 import { Sprout } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const Index = () => {
   const [charityOpen, setCharityOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [bettingOpen, setBettingOpen] = useState(false);
-  const [selectedProvince, setSelectedProvince] = useState<Province | null>(null);
+  const [selectedMarket, setSelectedMarket] = useState<TrendingMarket | null>(null);
   const [showParticle, setShowParticle] = useState(false);
-  const [charityPoolAmount, setCharityPoolAmount] = useState(128);
+  const [charityPoolAmount, setCharityPoolAmount] = useState(0);
   const charityButtonRef = useRef<HTMLButtonElement>(null);
 
-  const handleProvinceClick = (province: Province) => {
-    setSelectedProvince(province);
+  // Fetch total charity pool on load
+  useEffect(() => {
+    const fetchCharityTotal = async () => {
+      const { data, error } = await supabase
+        .from("charity_pool")
+        .select("amount");
+
+      if (!error && data) {
+        const total = data.reduce((sum, record) => sum + record.amount, 0);
+        setCharityPoolAmount(total / 1000); // Convert to K
+      }
+    };
+
+    fetchCharityTotal();
+  }, []);
+
+  const handleMarketClick = (market: TrendingMarket) => {
+    setSelectedMarket(market);
     setBettingOpen(true);
+  };
+
+  // Legacy handler for ChinaMap clicks - converts Province to TrendingMarket format
+  const handleProvinceClick = async (province: Province) => {
+    // Try to find an active market for this location
+    const { data } = await supabase
+      .from("markets")
+      .select("id, title, city, province, weather_condition, yes_pool, no_pool, end_date, status")
+      .eq("status", "active")
+      .or(`city.eq.${province.name},province.eq.${province.name}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      setSelectedMarket(data);
+      setBettingOpen(true);
+    } else {
+      // Create a temporary market object for display (but betting won't work without real market)
+      setSelectedMarket({
+        id: province.id,
+        title: `${province.name} 天气预测`,
+        city: province.name,
+        province: province.name,
+        weather_condition: province.weather,
+        yes_pool: 0,
+        no_pool: 0,
+        end_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: "active",
+      });
+      setBettingOpen(true);
+    }
   };
 
   const handleBetConfirm = useCallback((amount: number) => {
@@ -121,7 +169,7 @@ const Index = () => {
           </section>
 
           {/* Trending Markets */}
-          <TrendingMarkets onMarketClick={handleProvinceClick} />
+          <TrendingMarkets onMarketClick={handleMarketClick} />
         </main>
 
         {/* Footer */}
@@ -141,7 +189,7 @@ const Index = () => {
 
         {/* Modals & Drawers */}
         <BettingModal
-          province={selectedProvince}
+          market={selectedMarket}
           open={bettingOpen}
           onOpenChange={setBettingOpen}
           onBetConfirm={handleBetConfirm}

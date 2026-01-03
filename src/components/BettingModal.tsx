@@ -1,71 +1,145 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp } from "lucide-react";
+import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Province, WeatherType } from "./ChinaMap";
 import AnimatedCounter from "./AnimatedCounter";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import type { TrendingMarket } from "./TrendingMarkets";
 
 interface BettingModalProps {
-  province: Province | null;
+  market: TrendingMarket | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onBetConfirm?: (amount: number) => void;
 }
 
-const weatherOptions: {
-  type: WeatherType;
-  icon: React.ReactNode;
-  label: string;
-}[] = [{
-  type: "sunny",
-  icon: <Sun className="w-5 h-5" />,
-  label: "晴天"
-}, {
-  type: "rain",
-  icon: <CloudRain className="w-5 h-5" />,
-  label: "小雨"
-}, {
-  type: "drought",
-  icon: <Flame className="w-5 h-5" />,
-  label: "干旱"
-}, {
-  type: "flood",
-  icon: <Waves className="w-5 h-5" />,
-  label: "洪涝"
-}, {
-  type: "typhoon",
-  icon: <Wind className="w-5 h-5" />,
-  label: "台风"
-}];
-
 const quickAmounts = [10, 50, 100, 500];
 
+const weatherLabels: Record<string, string> = {
+  sunny: "晴天",
+  rain: "小雨",
+  drought: "干旱",
+  flood: "洪涝",
+  typhoon: "台风",
+  frost: "霜冻",
+  heatwave: "高温",
+  storm: "暴风雨",
+};
+
+const weatherIcons: Record<string, React.ReactNode> = {
+  sunny: <Sun className="w-4 h-4" />,
+  rain: <CloudRain className="w-4 h-4" />,
+  drought: <Flame className="w-4 h-4" />,
+  flood: <Waves className="w-4 h-4" />,
+  typhoon: <Wind className="w-4 h-4" />,
+  frost: <CloudRain className="w-4 h-4" />,
+  heatwave: <Sun className="w-4 h-4" />,
+  storm: <CloudRain className="w-4 h-4" />,
+};
+
 const BettingModal = ({
-  province,
+  market,
   open,
   onOpenChange,
   onBetConfirm
 }: BettingModalProps) => {
-  const [selectedWeather, setSelectedWeather] = useState<WeatherType>("drought");
   const [stance, setStance] = useState<"yes" | "no">("yes");
   const [amount, setAmount] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
 
-  if (!province) return null;
+  if (!market) return null;
 
   const numAmount = parseFloat(amount) || 0;
-  const odds = stance === "yes" ? 2.35 : 1.85;
+  const totalPool = market.yes_pool + market.no_pool;
+  const yesPool = market.yes_pool;
+  const noPool = market.no_pool;
+  
+  // Calculate dynamic odds based on current pool
+  const newYesPool = stance === "yes" ? yesPool + numAmount : yesPool;
+  const newNoPool = stance === "no" ? noPool + numAmount : noPool;
+  const newTotalPool = totalPool + numAmount;
+  
+  const odds = stance === "yes" 
+    ? (newYesPool > 0 ? newTotalPool / newYesPool : 2)
+    : (newNoPool > 0 ? newTotalPool / newNoPool : 2);
+  
   const potentialWin = numAmount * odds;
-  const yesPool = 65;
-  const noPool = 35;
-  const totalPool = 12580;
-  const currentWeather = province.weather;
+  const yesPercent = totalPool > 0 ? Math.round((yesPool / totalPool) * 100) : 50;
+  const noPercent = 100 - yesPercent;
 
-  const handleConfirm = () => {
-    if (numAmount > 0 && onBetConfirm) {
+  const weather = market.weather_condition;
+  const endDate = new Date(market.end_date).toLocaleDateString("zh-CN");
+
+  const handleConfirm = async () => {
+    if (numAmount <= 0) return;
+
+    setIsSubmitting(true);
+
+    // Check if user is logged in
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast({
+        title: "请先登录",
+        description: "您需要登录后才能下注",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Create bet record
+    const { error: betError } = await supabase.from("bets").insert({
+      user_id: user.id,
+      market_id: market.id,
+      position: stance,
+      amount: numAmount,
+    });
+
+    if (betError) {
+      toast({
+        title: "下注失败",
+        description: betError.message,
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Update market pool
+    const poolUpdate = stance === "yes" 
+      ? { yes_pool: yesPool + numAmount }
+      : { no_pool: noPool + numAmount };
+    
+    await supabase.from("markets").update(poolUpdate).eq("id", market.id);
+
+    // Add to charity pool (1% of bet)
+    const charityAmount = numAmount * 0.01;
+    await supabase.from("charity_pool").insert({
+      amount: charityAmount,
+      market_id: market.id,
+    });
+
+    // Update market charity contribution
+    await supabase.from("markets").update({
+      charity_contribution: market.yes_pool + market.no_pool + numAmount
+    }).eq("id", market.id);
+
+    toast({
+      title: "下注成功！",
+      description: `已下注 $${numAmount} USDC 于 ${stance.toUpperCase()} 侧`,
+    });
+
+    if (onBetConfirm) {
       onBetConfirm(numAmount);
     }
+
+    setAmount("");
+    setIsSubmitting(false);
     onOpenChange(false);
   };
 
@@ -74,61 +148,28 @@ const BettingModal = ({
       <DialogContent className="sm:max-w-md bg-card border-border shadow-medium">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-xl">
-            <span className="font-serif">{province.name}</span>
+            <span className="font-serif">{market.city}</span>
             <span className="text-sm font-normal text-muted-foreground px-2 py-0.5 bg-muted rounded-full">
-              {province.crop}
+              {market.province}
             </span>
           </DialogTitle>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
-            <span>目标日期：<span className="font-medium text-foreground">2026年1月11日</span></span>
+            <span>结束日期：<span className="font-medium text-foreground">{endDate}</span></span>
             <span className="text-muted-foreground">•</span>
             <span className="flex items-center gap-1">
-              当前天气：
-              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium
-                ${currentWeather === "sunny" ? "bg-weather-sunny/20 text-weather-sunny" : 
-                  currentWeather === "rain" ? "bg-weather-rain/20 text-weather-rain" : 
-                  currentWeather === "drought" ? "bg-weather-drought/20 text-weather-drought" : 
-                  currentWeather === "flood" ? "bg-weather-flood/20 text-weather-flood" : 
-                  "bg-weather-typhoon/20 text-weather-typhoon"}`}>
-                {currentWeather === "sunny" && <Sun className="w-3 h-3" />}
-                {currentWeather === "rain" && <CloudRain className="w-3 h-3" />}
-                {currentWeather === "drought" && <Flame className="w-3 h-3" />}
-                {currentWeather === "flood" && <Waves className="w-3 h-3" />}
-                {currentWeather === "typhoon" && <Wind className="w-3 h-3" />}
-                {weatherOptions.find(w => w.type === currentWeather)?.label}
+              预测条件：
+              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary`}>
+                {weatherIcons[weather]}
+                {weatherLabels[weather] || weather}
               </span>
             </span>
           </div>
         </DialogHeader>
 
         <div className="space-y-5 pt-2">
-          {/* Weather Selection */}
-          <div>
-            <label className="text-sm font-medium text-foreground mb-2 block">
-              选择天气预测
-            </label>
-            <div className="grid grid-cols-5 gap-2">
-              {weatherOptions.map(option => (
-                <motion.button
-                  key={option.type}
-                  onClick={() => setSelectedWeather(option.type)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`
-                    flex flex-col items-center gap-1 p-2.5 rounded-xl border-2 transition-all
-                    ${selectedWeather === option.type ? "border-primary bg-primary/10 shadow-soft" : "border-border hover:border-primary/50 hover:bg-muted/50"}
-                  `}
-                >
-                  <div className={`
-                    p-1.5 rounded-lg
-                    ${option.type === "sunny" ? "bg-weather-sunny/30" : option.type === "rain" ? "bg-weather-rain/30" : option.type === "drought" ? "bg-weather-drought/30" : option.type === "flood" ? "bg-weather-flood/30" : "bg-weather-typhoon/30"}
-                  `}>
-                    {option.icon}
-                  </div>
-                  <span className="text-[10px] font-medium">{option.label}</span>
-                </motion.button>
-              ))}
-            </div>
+          {/* Market Title */}
+          <div className="bg-muted/50 rounded-xl p-3">
+            <p className="text-sm font-medium text-foreground">{market.title}</p>
           </div>
 
           {/* Stance Toggle */}
@@ -212,20 +253,20 @@ const BettingModal = ({
             {/* Pool Distribution Bar */}
             <div className="mb-3">
               <div className="flex justify-between text-xs mb-1">
-                <span className="text-accent">YES {yesPool}%</span>
-                <span className="text-destructive">NO {noPool}%</span>
+                <span className="text-accent">YES {yesPercent}%</span>
+                <span className="text-destructive">NO {noPercent}%</span>
               </div>
               <div className="h-2 rounded-full overflow-hidden flex bg-background">
                 <motion.div
                   className="bg-accent"
                   initial={{ width: 0 }}
-                  animate={{ width: `${yesPool}%` }}
+                  animate={{ width: `${yesPercent}%` }}
                   transition={{ duration: 0.8, ease: "easeOut" }}
                 />
                 <motion.div
                   className="bg-destructive"
                   initial={{ width: 0 }}
-                  animate={{ width: `${noPool}%` }}
+                  animate={{ width: `${noPercent}%` }}
                   transition={{ duration: 0.8, ease: "easeOut", delay: 0.1 }}
                 />
               </div>
@@ -255,10 +296,13 @@ const BettingModal = ({
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
               onClick={handleConfirm}
-              disabled={numAmount <= 0}
+              disabled={numAmount <= 0 || isSubmitting}
               className="w-full h-12 text-base font-semibold"
               variant="default"
             >
+              {isSubmitting ? (
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+              ) : null}
               确认下注 (Confirm Bet)
             </Button>
           </motion.div>
