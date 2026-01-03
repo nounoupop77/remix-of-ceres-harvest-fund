@@ -162,7 +162,7 @@ const BettingModal = ({
             {/* Charity Note */}
             <div className="mt-3 pt-3 border-t border-border flex items-center gap-2">
               <Sprout className="w-4 h-4 text-accent" />
-              <span className="text-xs text-accent font-medium">🌱 1% 手续费将捐赠给助农资金池</span>
+              <span className="text-xs text-accent font-medium">🌱 1% 下注金额将捐赠给助农资金池</span>
             </div>
           </div>
 
