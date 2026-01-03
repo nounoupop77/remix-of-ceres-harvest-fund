@@ -7,61 +7,73 @@ interface TrendingMarketsProps {
 
 const trendingMarkets: {
   province: Province;
+  city: string;
+  provinceName: string;
   trend: "up" | "down";
   change: number;
 }[] = [
   {
     province: {
-      id: "henan",
-      name: "河南",
+      id: "zhumadian",
+      name: "驻马店",
       weather: "drought",
-      crop: "玉米",
+      crop: "小麦/玉米",
       poolSize: 456000,
     },
+    city: "驻马店",
+    provinceName: "河南",
     trend: "up",
     change: 23,
   },
   {
     province: {
-      id: "zhejiang",
-      name: "浙江",
+      id: "zhanjiang",
+      name: "湛江",
       weather: "typhoon",
-      crop: "茶叶",
+      crop: "糖蔗/水稻",
       poolSize: 345000,
     },
+    city: "湛江",
+    provinceName: "广东",
     trend: "up",
     change: 18,
   },
   {
     province: {
-      id: "shaanxi",
-      name: "陕西",
-      weather: "drought",
-      crop: "小麦",
+      id: "changde",
+      name: "常德",
+      weather: "flood",
+      crop: "水稻",
       poolSize: 312000,
     },
+    city: "常德",
+    provinceName: "湖南",
     trend: "down",
     change: 5,
   },
   {
     province: {
-      id: "hubei",
-      name: "湖北",
-      weather: "flood",
-      crop: "水稻",
+      id: "harbin",
+      name: "哈尔滨",
+      weather: "sunny",
+      crop: "玉米/大豆",
       poolSize: 289000,
     },
+    city: "哈尔滨",
+    provinceName: "黑龙江",
     trend: "up",
     change: 12,
   },
   {
     province: {
-      id: "fujian",
-      name: "福建",
-      weather: "typhoon",
-      crop: "水稻",
+      id: "chengdu",
+      name: "成都",
+      weather: "rain",
+      crop: "水稻/油菜",
       poolSize: 267000,
     },
+    city: "成都",
+    provinceName: "四川",
     trend: "up",
     change: 31,
   },
@@ -76,8 +88,8 @@ const weatherIcons: Record<WeatherType, React.ReactNode> = {
 };
 
 const weatherLabels: Record<WeatherType, string> = {
-  sunny: "晴天预报",
-  rain: "降雨预警",
+  sunny: "气象平稳",
+  rain: "持续小雨",
   drought: "干旱预警",
   flood: "洪涝预警",
   typhoon: "台风预警",
@@ -150,8 +162,7 @@ const TrendingMarkets = ({ onMarketClick }: TrendingMarketsProps) => {
               {/* Content */}
               <div className="mb-3">
                 <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                  {market.province.name} ·{" "}
-                  {weatherLabels[market.province.weather]}
+                  {market.city} ({market.provinceName}) · {weatherLabels[market.province.weather]}
                 </h3>
                 <p className="text-sm text-muted-foreground">
                   主要作物: {market.province.crop}
