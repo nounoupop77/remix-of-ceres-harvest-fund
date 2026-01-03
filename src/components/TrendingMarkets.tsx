@@ -30,6 +30,7 @@ const weatherIcons: Record<string, React.ReactNode> = {
   frost: <CloudRain className="w-5 h-5" />,
   heatwave: <Sun className="w-5 h-5" />,
   storm: <CloudRain className="w-5 h-5" />,
+  pending: <TrendingUp className="w-5 h-5" />,
 };
 
 const weatherLabels: Record<string, string> = {
@@ -41,6 +42,7 @@ const weatherLabels: Record<string, string> = {
   frost: "霜冻预警",
   heatwave: "高温预警",
   storm: "暴风雨预警",
+  pending: "开放预测",
 };
 
 const weatherBgColors: Record<string, string> = {
@@ -52,6 +54,7 @@ const weatherBgColors: Record<string, string> = {
   frost: "bg-weather-rain/20",
   heatwave: "bg-weather-sunny/20",
   storm: "bg-weather-rain/20",
+  pending: "bg-primary/20",
 };
 
 const weatherIconColors: Record<string, string> = {
@@ -63,6 +66,7 @@ const weatherIconColors: Record<string, string> = {
   frost: "text-weather-rain",
   heatwave: "text-weather-sunny",
   storm: "text-weather-rain",
+  pending: "text-primary",
 };
 
 const containerVariants = {

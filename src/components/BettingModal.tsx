@@ -70,6 +70,7 @@ const BettingModal = ({
   onBetConfirm
 }: BettingModalProps) => {
   const [selectedWeather, setSelectedWeather] = useState<string>("");
+  const [yesNoChoice, setYesNoChoice] = useState<"yes" | "no" | null>(null);
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [paymentStep, setPaymentStep] = useState<"input" | "wallet" | "processing" | "complete">("input");
@@ -80,6 +81,7 @@ const BettingModal = ({
   useEffect(() => {
     if (open) {
       setSelectedWeather("");
+      setYesNoChoice(null);
       setAmount("");
       setPaymentStep("input");
     }
@@ -92,12 +94,12 @@ const BettingModal = ({
   const yesPool = market.yes_pool;
   const noPool = market.no_pool;
   
-  // User is betting YES if they select the same weather as the market condition
-  const isYesBet = selectedWeather === market.weather_condition;
+  // User's bet stance is determined by their YES/NO choice
+  const isYesBet = yesNoChoice === "yes";
   
   // Calculate dynamic odds based on current pool
   const newYesPool = isYesBet ? yesPool + numAmount : yesPool;
-  const newNoPool = !isYesBet && selectedWeather ? noPool + numAmount : noPool;
+  const newNoPool = yesNoChoice === "no" ? noPool + numAmount : noPool;
   const newTotalPool = totalPool + numAmount;
   
   const odds = isYesBet 
@@ -108,11 +110,10 @@ const BettingModal = ({
   const yesPercent = totalPool > 0 ? Math.round((yesPool / totalPool) * 100) : 50;
   const noPercent = 100 - yesPercent;
 
-  const weather = market.weather_condition;
   const endDate = new Date(market.end_date).toLocaleDateString("zh-CN");
 
   const handleConfirm = async () => {
-    if (numAmount <= 0 || !selectedWeather) return;
+    if (numAmount <= 0 || !selectedWeather || !yesNoChoice) return;
 
     // Check if user is logged in
     const { data: { user } } = await supabase.auth.getUser();
@@ -264,14 +265,6 @@ const BettingModal = ({
           </DialogTitle>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <span>结束日期：<span className="font-medium text-foreground">{endDate}</span></span>
-            <span className="text-muted-foreground">•</span>
-            <span className="flex items-center gap-1">
-              预测条件：
-              <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary`}>
-                {weatherIcons[weather]}
-                {weatherLabels[weather] || weather}
-              </span>
-            </span>
           </div>
         </DialogHeader>
 
@@ -284,14 +277,17 @@ const BettingModal = ({
           {/* Weather Selection */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
-              选择您预测的天气条件
+              1. 选择您预测 8 天后的天气
             </label>
             <div className="grid grid-cols-4 gap-2">
-              {weatherOptions.map((weather) => (
+              {weatherOptions.slice(0, 5).map((weather) => (
                 <motion.button
                   key={weather.value}
                   type="button"
-                  onClick={() => setSelectedWeather(weather.value)}
+                  onClick={() => {
+                    setSelectedWeather(weather.value);
+                    setYesNoChoice(null); // Reset YES/NO when weather changes
+                  }}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className={`
@@ -306,24 +302,69 @@ const BettingModal = ({
                 </motion.button>
               ))}
             </div>
-            {selectedWeather && (
-              <motion.div 
-                initial={{ opacity: 0, y: -5 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mt-2 text-sm"
-              >
-                {isYesBet ? (
-                  <span className="text-accent">
-                    ✓ 您预测天气为「{weatherLabels[selectedWeather]}」（与市场条件一致 = YES）
-                  </span>
-                ) : (
-                  <span className="text-destructive">
-                    ✗ 您预测天气为「{weatherLabels[selectedWeather]}」（与市场条件不同 = NO）
-                  </span>
-                )}
-              </motion.div>
-            )}
           </div>
+
+          {/* YES/NO Selection - Only show after weather is selected */}
+          {selectedWeather && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-2"
+            >
+              <label className="text-sm font-medium text-foreground mb-2 block">
+                2. 您认为「{weatherLabels[selectedWeather]}」会发生吗？
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <motion.button
+                  type="button"
+                  onClick={() => setYesNoChoice("yes")}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`
+                    flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold transition-all border-2
+                    ${yesNoChoice === "yes" 
+                      ? "bg-accent/20 border-accent text-accent ring-2 ring-accent/20" 
+                      : "bg-muted/50 border-transparent hover:bg-muted text-foreground"}
+                  `}
+                >
+                  <span className="text-lg">✓</span>
+                  <span>是 (YES)</span>
+                </motion.button>
+                <motion.button
+                  type="button"
+                  onClick={() => setYesNoChoice("no")}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`
+                    flex items-center justify-center gap-2 py-4 px-4 rounded-xl text-base font-semibold transition-all border-2
+                    ${yesNoChoice === "no" 
+                      ? "bg-destructive/20 border-destructive text-destructive ring-2 ring-destructive/20" 
+                      : "bg-muted/50 border-transparent hover:bg-muted text-foreground"}
+                  `}
+                >
+                  <span className="text-lg">✗</span>
+                  <span>否 (NO)</span>
+                </motion.button>
+              </div>
+              {yesNoChoice && (
+                <motion.div 
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mt-2 p-3 rounded-lg bg-muted/50 text-sm"
+                >
+                  {yesNoChoice === "yes" ? (
+                    <span className="text-accent">
+                      ✓ 您预测 8 天后天气为「{weatherLabels[selectedWeather]}」
+                    </span>
+                  ) : (
+                    <span className="text-destructive">
+                      ✗ 您预测 8 天后天气不会是「{weatherLabels[selectedWeather]}」
+                    </span>
+                  )}
+                </motion.div>
+              )}
+            </motion.div>
+          )}
 
           {/* Amount Input */}
           <div>
@@ -488,11 +529,11 @@ const BettingModal = ({
             ) : (
               <Button
                 onClick={handleConfirm}
-                disabled={numAmount <= 0 || !selectedWeather || isSubmitting}
+                disabled={numAmount <= 0 || !selectedWeather || !yesNoChoice || isSubmitting}
                 className="w-full h-12 text-base font-semibold"
                 variant="default"
               >
-                {!selectedWeather ? "请先选择天气预测" : (
+                {!selectedWeather ? "请先选择天气" : !yesNoChoice ? "请选择 是/否" : (
                   wallet.isConnected ? "确认下注 (Confirm Bet)" : "连接钱包并下注"
                 )}
               </Button>

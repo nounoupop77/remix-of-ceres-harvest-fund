@@ -72,7 +72,6 @@ const AdminMarketsTab = () => {
     description: "",
     city: "",
     province: "",
-    weather_condition: "drought",
     end_date: "",
     position_top: "",
     position_left: "",
@@ -111,7 +110,7 @@ const AdminMarketsTab = () => {
       description: formData.description || null,
       city: formData.city,
       province: formData.province,
-      weather_condition: formData.weather_condition,
+      weather_condition: "pending", // 用户下注时选择天气
       end_date: formData.end_date,
       position_top: formData.position_top || null,
       position_left: formData.position_left || null,
@@ -148,7 +147,6 @@ const AdminMarketsTab = () => {
       description: "",
       city: "",
       province: "",
-      weather_condition: "drought",
       end_date: "",
       position_top: "",
       position_left: "",
@@ -163,7 +161,6 @@ const AdminMarketsTab = () => {
       description: market.description || "",
       city: market.city,
       province: market.province,
-      weather_condition: market.weather_condition,
       end_date: market.end_date.split("T")[0],
       position_top: market.position_top || "",
       position_left: market.position_left || "",
@@ -248,7 +245,6 @@ const AdminMarketsTab = () => {
                   description: "",
                   city: "",
                   province: "",
-                  weather_condition: "drought",
                   end_date: "",
                   position_top: "",
                   position_left: "",
@@ -311,26 +307,6 @@ const AdminMarketsTab = () => {
                     required
                   />
                 </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="weather_condition">天气条件</Label>
-                <Select
-                  value={formData.weather_condition}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, weather_condition: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {weatherConditions.map((cond) => (
-                      <SelectItem key={cond.value} value={cond.value}>
-                        {cond.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="crop">主要作物</Label>
