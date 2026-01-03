@@ -1,4 +1,5 @@
-import { Heart, AlertTriangle, Users, MapPin, Coins } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Heart, Users, MapPin, Coins, Loader2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -6,32 +7,55 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
+import AnimatedCounter from "./AnimatedCounter";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CharityDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const recipients = [
-  { name: "河南周口·张庄村合作社", amount: 45000, date: "2025-12-28" },
-  { name: "山东德州·绿洲救援队", amount: 32000, date: "2025-12-25" },
-  { name: "陕西渭南·旱区互助会", amount: 28000, date: "2025-12-20" },
-  { name: "浙江温州·台风应急队", amount: 56000, date: "2025-12-15" },
-  { name: "湖北荆州·防汛指挥部", amount: 41000, date: "2025-12-10" },
-];
+interface CharityRecord {
+  id: string;
+  amount: number;
+  recipient_name: string | null;
+  status: string;
+  distributed_at: string | null;
+  created_at: string;
+}
 
 const CharityDrawer = ({ open, onOpenChange }: CharityDrawerProps) => {
-  const { toast } = useToast();
+  const [records, setRecords] = useState<CharityRecord[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [totalPool, setTotalPool] = useState(0);
+  const [totalDistributed, setTotalDistributed] = useState(0);
 
-  const handleSimulateDisaster = () => {
-    toast({
-      title: "⚠️ 灾难模拟触发",
-      description: "已向河南周口·张庄村合作社拨付 ¥45,000 救灾资金",
-      duration: 5000,
-    });
-  };
+  useEffect(() => {
+    const fetchRecords = async () => {
+      const { data, error } = await supabase
+        .from("charity_pool")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (!error && data) {
+        setRecords(data);
+        
+        // Calculate totals
+        const pending = data.filter(r => r.status === "pending").reduce((sum, r) => sum + r.amount, 0);
+        const distributed = data.filter(r => r.status === "distributed").reduce((sum, r) => sum + r.amount, 0);
+        setTotalPool(pending + distributed);
+        setTotalDistributed(distributed);
+      }
+      setIsLoading(false);
+    };
+
+    if (open) {
+      fetchRecords();
+    }
+  }, [open]);
+
+  const distributedRecords = records.filter(r => r.status === "distributed" && r.recipient_name);
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -42,89 +66,92 @@ const CharityDrawer = ({ open, onOpenChange }: CharityDrawerProps) => {
             公益资金池
           </SheetTitle>
           <SheetDescription>
-            博弈手续费的 2% 自动注入此资金池，用于农业灾害救助
+            博弈手续费的 1% 自动注入此资金池，用于农业灾害救助
           </SheetDescription>
         </SheetHeader>
 
-        <div className="space-y-6">
-          {/* Total Pool */}
-          <div className="gradient-earth rounded-2xl p-6 text-center shadow-medium">
-            <div className="flex items-center justify-center gap-2 text-primary-foreground/80 mb-2">
-              <Coins className="w-5 h-5" />
-              <span className="text-sm font-medium">资金池总额</span>
-            </div>
-            <p className="text-4xl font-serif font-bold text-primary-foreground">
-              $2,847,560
-            </p>
-            <p className="text-sm text-primary-foreground/70 mt-1">
-              ≈ ¥20,502,432 CNY
-            </p>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="w-6 h-6 animate-spin text-primary" />
           </div>
-
-          {/* Stats */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-secondary/50 rounded-xl p-4 text-center">
-              <Users className="w-5 h-5 mx-auto mb-1 text-secondary-foreground" />
-              <p className="text-2xl font-bold text-foreground">1,247</p>
-              <p className="text-xs text-muted-foreground">受助农户</p>
+        ) : (
+          <div className="space-y-6">
+            {/* Total Pool */}
+            <div className="gradient-earth rounded-2xl p-6 text-center shadow-medium">
+              <div className="flex items-center justify-center gap-2 text-primary-foreground/80 mb-2">
+                <Coins className="w-5 h-5" />
+                <span className="text-sm font-medium">资金池总额</span>
+              </div>
+              <p className="text-4xl font-serif font-bold text-primary-foreground">
+                $<AnimatedCounter value={totalPool} decimals={2} />
+              </p>
+              <p className="text-sm text-primary-foreground/70 mt-1">
+                ≈ ¥{(totalPool * 7.2).toFixed(0)} CNY
+              </p>
             </div>
-            <div className="bg-secondary/50 rounded-xl p-4 text-center">
-              <MapPin className="w-5 h-5 mx-auto mb-1 text-secondary-foreground" />
-              <p className="text-2xl font-bold text-foreground">89</p>
-              <p className="text-xs text-muted-foreground">覆盖地区</p>
-            </div>
-          </div>
 
-          {/* Recipients List */}
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <span>受助节点名单</span>
-              <span className="text-xs font-normal text-muted-foreground">
-                (近期拨付)
-              </span>
-            </h3>
-            <div className="space-y-2">
-              {recipients.map((recipient, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
-                >
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      {recipient.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {recipient.date}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-semibold text-accent">
-                      +${(recipient.amount / 7.2).toFixed(0)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      ¥{recipient.amount.toLocaleString()}
-                    </p>
-                  </div>
+            {/* Stats */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-secondary/50 rounded-xl p-4 text-center">
+                <Coins className="w-5 h-5 mx-auto mb-1 text-secondary-foreground" />
+                <p className="text-2xl font-bold text-foreground">
+                  $<AnimatedCounter value={totalDistributed} decimals={0} />
+                </p>
+                <p className="text-xs text-muted-foreground">已发放</p>
+              </div>
+              <div className="bg-secondary/50 rounded-xl p-4 text-center">
+                <MapPin className="w-5 h-5 mx-auto mb-1 text-secondary-foreground" />
+                <p className="text-2xl font-bold text-foreground">{distributedRecords.length}</p>
+                <p className="text-xs text-muted-foreground">受助节点</p>
+              </div>
+            </div>
+
+            {/* Recipients List */}
+            <div>
+              <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
+                <span>受助节点名单</span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  (已拨付)
+                </span>
+              </h3>
+              {distributedRecords.length > 0 ? (
+                <div className="space-y-2">
+                  {distributedRecords.map((record) => (
+                    <div
+                      key={record.id}
+                      className="flex items-center justify-between p-3 bg-muted/50 rounded-xl hover:bg-muted transition-colors"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-foreground">
+                          {record.recipient_name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {record.distributed_at 
+                            ? new Date(record.distributed_at).toLocaleDateString("zh-CN")
+                            : new Date(record.created_at).toLocaleDateString("zh-CN")}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold text-accent">
+                          +${record.amount.toFixed(0)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          ¥{(record.amount * 7.2).toFixed(0)}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  <Heart className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>暂无已发放记录</p>
+                  <p className="text-sm">资金池正在积累中</p>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* God Mode Button */}
-          <div className="pt-4 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center mb-3">
-              演示模式：模拟灾害发生并触发资金赔付
-            </p>
-            <Button
-              variant="destructive"
-              className="w-full h-12 text-base font-semibold gap-2"
-              onClick={handleSimulateDisaster}
-            >
-              <AlertTriangle className="w-5 h-5" />
-              ⚠️ 模拟灾难触发
-            </Button>
-          </div>
-        </div>
+        )}
       </SheetContent>
     </Sheet>
   );
