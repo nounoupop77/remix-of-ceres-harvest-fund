@@ -249,8 +249,6 @@ const ActiveBetCard = ({ bet }: { bet: BetRecord }) => {
   
   const yesPool = bet.yesPool || 0;
   const noPool = bet.noPool || 0;
-  const totalPool = yesPool + noPool;
-  const yesPercentage = totalPool > 0 ? (yesPool / totalPool) * 100 : 50;
   
   const estimatedContribution = Math.round(bet.amount * 0.15);
 
@@ -315,36 +313,6 @@ const ActiveBetCard = ({ bet }: { bet: BetRecord }) => {
             </div>
           </div>
 
-          {/* Odds Bar */}
-          <div>
-            <p className="text-xs text-muted-foreground mb-2">实时赔率比例</p>
-            <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="absolute left-0 top-0 h-full bg-accent transition-all duration-500"
-                style={{ width: `${yesPercentage}%` }}
-              />
-              <div 
-                className="absolute right-0 top-0 h-full bg-destructive transition-all duration-500"
-                style={{ width: `${100 - yesPercentage}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-xs mt-1">
-              <span className="text-accent">{yesPercentage.toFixed(1)}% YES</span>
-              <span className="text-destructive">{(100 - yesPercentage).toFixed(1)}% NO</span>
-            </div>
-          </div>
-
-          {/* My Contribution Estimate */}
-          <div className="bg-primary/5 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-primary mb-1">
-              <Heart className="w-4 h-4" />
-              <span className="text-xs font-medium">我的预估贡献</span>
-            </div>
-            <p className="text-sm text-foreground">
-              若博弈成功，您将为<span className="font-semibold text-primary">{bet.city}</span>贡献约 
-              <span className="font-bold text-primary"> ${estimatedContribution} USDC</span> 公益金
-            </p>
-          </div>
 
           {/* NFT Status */}
           <div className="flex items-center gap-2 text-sm">
