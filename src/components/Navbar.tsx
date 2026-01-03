@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Heart, History, Sprout, Shield } from "lucide-react";
+import { Heart, History, Sprout, Leaf } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AnimatedCounter from "@/components/AnimatedCounter";
 import WalletButton from "@/components/WalletButton";
@@ -53,12 +53,11 @@ const Navbar = ({
           {/* Admin Button */}
           <Button
             variant="ghost"
-            size="sm"
+            size="icon"
             onClick={() => navigate("/admin-login")}
-            className="hidden sm:flex gap-2 text-muted-foreground hover:text-foreground hover:bg-secondary"
+            className="hidden sm:flex text-muted-foreground hover:text-foreground hover:bg-secondary"
           >
-            <Shield className="w-4 h-4" />
-            <span>管理后台</span>
+            <Leaf className="w-4 h-4" />
           </Button>
 
           <Button
@@ -98,7 +97,7 @@ const Navbar = ({
             onClick={() => navigate("/admin-login")}
             className="sm:hidden text-muted-foreground hover:text-foreground"
           >
-            <Shield className="w-4 h-4" />
+            <Leaf className="w-4 h-4" />
           </Button>
 
           <Button
