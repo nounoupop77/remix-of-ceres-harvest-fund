@@ -239,9 +239,15 @@ const BettingModal = ({
   };
 
   const handleConnectWallet = async () => {
-    await wallet.connect();
-    if (wallet.isConnected) {
+    try {
+      await wallet.connect();
       setPaymentStep("input");
+    } catch (err: any) {
+      toast({
+        title: "连接钱包失败",
+        description: err?.message || "请确认已安装并启用 MetaMask",
+        variant: "destructive",
+      });
     }
   };
 

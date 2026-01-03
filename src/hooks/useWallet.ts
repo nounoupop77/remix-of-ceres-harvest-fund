@@ -114,10 +114,19 @@ export const useWallet = (): UseWalletReturn => {
   }, [getProvider, getUSDCContract]);
 
   const connect = useCallback(async () => {
-    if (typeof window === 'undefined' || !window.ethereum) {
-      setState(prev => ({ ...prev, error: '请先安装 MetaMask 钱包插件' }));
+    if (typeof window === 'undefined') {
+      const msg = '当前环境无法连接钱包';
+      setState(prev => ({ ...prev, error: msg, isConnecting: false }));
+      throw new Error(msg);
+    }
+
+    if (!window.ethereum) {
+      const msg =
+        '未检测到 MetaMask（如果你在预览框/内嵌页面里打开，请在新窗口打开应用再试）';
+      setState(prev => ({ ...prev, error: msg, isConnecting: false }));
+      // 尝试打开安装页面（可能会被浏览器拦截）
       window.open('https://metamask.io/download/', '_blank');
-      return;
+      throw new Error(msg);
     }
 
     setState(prev => ({ ...prev, isConnecting: true, error: null }));
@@ -160,11 +169,13 @@ export const useWallet = (): UseWalletReturn => {
 
     } catch (error: any) {
       console.error('Connection error:', error);
+      const msg = error?.message || '连接钱包失败';
       setState(prev => ({
         ...prev,
         isConnecting: false,
-        error: error.message || '连接钱包失败',
+        error: msg,
       }));
+      throw error instanceof Error ? error : new Error(msg);
     }
   }, [getProvider, fetchBalances]);
 
