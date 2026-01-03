@@ -146,16 +146,6 @@ const Index = () => {
               transition={{ delay: 0.5, duration: 0.5 }}
               className="text-muted-foreground text-base sm:text-lg max-w-2xl mx-auto"
             >
-              <span className="text-primary font-medium">Gamble for Greed</span>
-              <span className="mx-2">·</span>
-              <span className="text-accent font-medium">Pay for Need</span>
-            </motion.p>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
-              className="text-sm text-muted-foreground mt-2 max-w-xl mx-auto"
-            >
               点击地图选择省份，预测天气变化，博弈收益的 1% 将自动捐赠至助农资金池
             </motion.p>
           </section>
