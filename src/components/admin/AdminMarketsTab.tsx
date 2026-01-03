@@ -54,6 +54,9 @@ interface Market {
   no_pool: number;
   charity_contribution: number;
   created_at: string;
+  position_top: string | null;
+  position_left: string | null;
+  crop: string | null;
 }
 
 const AdminMarketsTab = () => {
@@ -68,6 +71,9 @@ const AdminMarketsTab = () => {
     province: "",
     weather_condition: "drought",
     end_date: "",
+    position_top: "",
+    position_left: "",
+    crop: "",
   });
   const { toast } = useToast();
 
@@ -103,6 +109,9 @@ const AdminMarketsTab = () => {
       province: formData.province,
       weather_condition: formData.weather_condition,
       end_date: formData.end_date,
+      position_top: formData.position_top || null,
+      position_left: formData.position_left || null,
+      crop: formData.crop || null,
     };
 
     if (editingMarket) {
@@ -137,6 +146,9 @@ const AdminMarketsTab = () => {
       province: "",
       weather_condition: "drought",
       end_date: "",
+      position_top: "",
+      position_left: "",
+      crop: "",
     });
   };
 
@@ -149,6 +161,9 @@ const AdminMarketsTab = () => {
       province: market.province,
       weather_condition: market.weather_condition,
       end_date: market.end_date.split("T")[0],
+      position_top: market.position_top || "",
+      position_left: market.position_left || "",
+      crop: market.crop || "",
     });
     setIsDialogOpen(true);
   };
@@ -194,8 +209,11 @@ const AdminMarketsTab = () => {
   };
 
   const weatherConditions = [
+    { value: "sunny", label: "晴天" },
+    { value: "rain", label: "小雨" },
     { value: "drought", label: "干旱" },
     { value: "flood", label: "洪涝" },
+    { value: "typhoon", label: "台风" },
     { value: "frost", label: "霜冻" },
     { value: "heatwave", label: "高温" },
     { value: "storm", label: "暴风雨" },
@@ -228,6 +246,9 @@ const AdminMarketsTab = () => {
                   province: "",
                   weather_condition: "drought",
                   end_date: "",
+                  position_top: "",
+                  position_left: "",
+                  crop: "",
                 });
               }}
             >
@@ -308,6 +329,17 @@ const AdminMarketsTab = () => {
                 </Select>
               </div>
               <div className="space-y-2">
+                <Label htmlFor="crop">主要作物</Label>
+                <Input
+                  id="crop"
+                  placeholder="如：水稻、小麦、玉米"
+                  value={formData.crop}
+                  onChange={(e) =>
+                    setFormData({ ...formData, crop: e.target.value })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
                 <Label htmlFor="end_date">结束日期</Label>
                 <Input
                   id="end_date"
@@ -318,6 +350,31 @@ const AdminMarketsTab = () => {
                   }
                   required
                 />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                  地图坐标
+                  <span className="text-xs text-muted-foreground">(填写后将在地图上显示)</span>
+                </Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Input
+                    placeholder="Top %（如 45.5%）"
+                    value={formData.position_top}
+                    onChange={(e) =>
+                      setFormData({ ...formData, position_top: e.target.value })
+                    }
+                  />
+                  <Input
+                    placeholder="Left %（如 65.2%）"
+                    value={formData.position_left}
+                    onChange={(e) =>
+                      setFormData({ ...formData, position_left: e.target.value })
+                    }
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  坐标示例：深圳约为 Top: 77%, Left: 68%
+                </p>
               </div>
               <Button type="submit" variant="wallet" className="w-full">
                 {editingMarket ? "保存修改" : "创建"}
