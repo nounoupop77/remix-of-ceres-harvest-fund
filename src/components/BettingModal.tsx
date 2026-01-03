@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2 } from "lucide-react";
+import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2, Snowflake, Thermometer, CloudLightning } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,25 @@ interface BettingModalProps {
   onBetConfirm?: (amount: number) => void;
 }
 
+type WeatherOption = {
+  value: string;
+  label: string;
+  icon: React.ReactNode;
+  bgColor: string;
+};
+
 const quickAmounts = [10, 50, 100, 500];
+
+const weatherOptions: WeatherOption[] = [
+  { value: "sunny", label: "晴天", icon: <Sun className="w-4 h-4" />, bgColor: "bg-yellow-500/20 hover:bg-yellow-500/30 border-yellow-500/50" },
+  { value: "rain", label: "小雨", icon: <CloudRain className="w-4 h-4" />, bgColor: "bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/50" },
+  { value: "drought", label: "干旱", icon: <Flame className="w-4 h-4" />, bgColor: "bg-orange-500/20 hover:bg-orange-500/30 border-orange-500/50" },
+  { value: "flood", label: "洪涝", icon: <Waves className="w-4 h-4" />, bgColor: "bg-teal-500/20 hover:bg-teal-500/30 border-teal-500/50" },
+  { value: "typhoon", label: "台风", icon: <Wind className="w-4 h-4" />, bgColor: "bg-purple-500/20 hover:bg-purple-500/30 border-purple-500/50" },
+  { value: "frost", label: "霜冻", icon: <Snowflake className="w-4 h-4" />, bgColor: "bg-cyan-500/20 hover:bg-cyan-500/30 border-cyan-500/50" },
+  { value: "heatwave", label: "高温", icon: <Thermometer className="w-4 h-4" />, bgColor: "bg-red-500/20 hover:bg-red-500/30 border-red-500/50" },
+  { value: "storm", label: "暴风雨", icon: <CloudLightning className="w-4 h-4" />, bgColor: "bg-slate-500/20 hover:bg-slate-500/30 border-slate-500/50" },
+];
 
 const weatherLabels: Record<string, string> = {
   sunny: "晴天",
@@ -35,9 +53,9 @@ const weatherIcons: Record<string, React.ReactNode> = {
   drought: <Flame className="w-4 h-4" />,
   flood: <Waves className="w-4 h-4" />,
   typhoon: <Wind className="w-4 h-4" />,
-  frost: <CloudRain className="w-4 h-4" />,
-  heatwave: <Sun className="w-4 h-4" />,
-  storm: <CloudRain className="w-4 h-4" />,
+  frost: <Snowflake className="w-4 h-4" />,
+  heatwave: <Thermometer className="w-4 h-4" />,
+  storm: <CloudLightning className="w-4 h-4" />,
 };
 
 const BettingModal = ({
@@ -46,10 +64,18 @@ const BettingModal = ({
   onOpenChange,
   onBetConfirm
 }: BettingModalProps) => {
-  const [stance, setStance] = useState<"yes" | "no">("yes");
+  const [selectedWeather, setSelectedWeather] = useState<string>("");
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Reset selected weather when modal opens
+  useEffect(() => {
+    if (open) {
+      setSelectedWeather("");
+      setAmount("");
+    }
+  }, [open]);
 
   if (!market) return null;
 
@@ -58,12 +84,15 @@ const BettingModal = ({
   const yesPool = market.yes_pool;
   const noPool = market.no_pool;
   
+  // User is betting YES if they select the same weather as the market condition
+  const isYesBet = selectedWeather === market.weather_condition;
+  
   // Calculate dynamic odds based on current pool
-  const newYesPool = stance === "yes" ? yesPool + numAmount : yesPool;
-  const newNoPool = stance === "no" ? noPool + numAmount : noPool;
+  const newYesPool = isYesBet ? yesPool + numAmount : yesPool;
+  const newNoPool = !isYesBet && selectedWeather ? noPool + numAmount : noPool;
   const newTotalPool = totalPool + numAmount;
   
-  const odds = stance === "yes" 
+  const odds = isYesBet 
     ? (newYesPool > 0 ? newTotalPool / newYesPool : 2)
     : (newNoPool > 0 ? newTotalPool / newNoPool : 2);
   
@@ -75,9 +104,11 @@ const BettingModal = ({
   const endDate = new Date(market.end_date).toLocaleDateString("zh-CN");
 
   const handleConfirm = async () => {
-    if (numAmount <= 0) return;
+    if (numAmount <= 0 || !selectedWeather) return;
 
     setIsSubmitting(true);
+
+    const stance = isYesBet ? "yes" : "no";
 
     // Check if user is logged in
     const { data: { user } } = await supabase.auth.getUser();
@@ -131,7 +162,7 @@ const BettingModal = ({
 
     toast({
       title: "下注成功！",
-      description: `已下注 $${numAmount} USDC 于 ${stance.toUpperCase()} 侧`,
+      description: `已下注 $${numAmount} USDC，预测天气为「${weatherLabels[selectedWeather]}」`,
     });
 
     if (onBetConfirm) {
@@ -172,35 +203,48 @@ const BettingModal = ({
             <p className="text-sm font-medium text-foreground">{market.title}</p>
           </div>
 
-          {/* Stance Toggle */}
+          {/* Weather Selection */}
           <div>
             <label className="text-sm font-medium text-foreground mb-2 block">
-              您的立场
+              选择您预测的天气条件
             </label>
-            <div className="flex gap-2">
-              <motion.button
-                onClick={() => setStance("yes")}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`
-                  flex-1 py-3 rounded-xl font-semibold text-sm transition-all
-                  ${stance === "yes" ? "bg-accent text-accent-foreground shadow-soft" : "bg-muted text-muted-foreground hover:bg-accent/20"}
-                `}
-              >
-                ✓ YES - 会发生
-              </motion.button>
-              <motion.button
-                onClick={() => setStance("no")}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className={`
-                  flex-1 py-3 rounded-xl font-semibold text-sm transition-all
-                  ${stance === "no" ? "bg-destructive text-destructive-foreground shadow-soft" : "bg-muted text-muted-foreground hover:bg-destructive/20"}
-                `}
-              >
-                ✗ NO - 不会发生
-              </motion.button>
+            <div className="grid grid-cols-4 gap-2">
+              {weatherOptions.map((weather) => (
+                <motion.button
+                  key={weather.value}
+                  type="button"
+                  onClick={() => setSelectedWeather(weather.value)}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`
+                    flex flex-col items-center gap-1 py-3 px-2 rounded-xl text-sm transition-all border-2
+                    ${selectedWeather === weather.value 
+                      ? `${weather.bgColor} border-current ring-2 ring-primary/20` 
+                      : "bg-muted/50 border-transparent hover:bg-muted"}
+                  `}
+                >
+                  {weather.icon}
+                  <span className="text-xs font-medium">{weather.label}</span>
+                </motion.button>
+              ))}
             </div>
+            {selectedWeather && (
+              <motion.div 
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-2 text-sm"
+              >
+                {isYesBet ? (
+                  <span className="text-accent">
+                    ✓ 您预测天气为「{weatherLabels[selectedWeather]}」（与市场条件一致 = YES）
+                  </span>
+                ) : (
+                  <span className="text-destructive">
+                    ✗ 您预测天气为「{weatherLabels[selectedWeather]}」（与市场条件不同 = NO）
+                  </span>
+                )}
+              </motion.div>
+            )}
           </div>
 
           {/* Amount Input */}
@@ -296,14 +340,14 @@ const BettingModal = ({
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             <Button
               onClick={handleConfirm}
-              disabled={numAmount <= 0 || isSubmitting}
+              disabled={numAmount <= 0 || !selectedWeather || isSubmitting}
               className="w-full h-12 text-base font-semibold"
               variant="default"
             >
               {isSubmitting ? (
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
               ) : null}
-              确认下注 (Confirm Bet)
+              {!selectedWeather ? "请先选择天气预测" : "确认下注 (Confirm Bet)"}
             </Button>
           </motion.div>
         </div>

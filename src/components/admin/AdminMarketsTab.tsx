@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -7,8 +7,9 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  Calendar,
   MapPin,
+  Maximize2,
+  X,
 } from "lucide-react";
 import chinaFarmlandMap from "@/assets/china-farmland-map.png";
 import { Button } from "@/components/ui/button";
@@ -77,6 +78,7 @@ const AdminMarketsTab = () => {
     position_left: "",
     crop: "",
   });
+  const [isMapDialogOpen, setIsMapDialogOpen] = useState(false);
   const { toast } = useToast();
 
   const fetchMarkets = async () => {
@@ -357,52 +359,28 @@ const AdminMarketsTab = () => {
                 <Label className="flex items-center gap-2">
                   <MapPin className="w-4 h-4" />
                   地图坐标
-                  <span className="text-xs text-muted-foreground">(点击地图选择位置)</span>
                 </Label>
-                <div 
-                  className="relative w-full aspect-[4/3] border border-border rounded-lg overflow-hidden cursor-crosshair bg-muted/30"
-                  onClick={(e) => {
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                    const y = ((e.clientY - rect.top) / rect.height) * 100;
-                    setFormData({
-                      ...formData,
-                      position_top: `${y.toFixed(1)}%`,
-                      position_left: `${x.toFixed(1)}%`,
-                    });
-                  }}
-                >
-                  <img
-                    src={chinaFarmlandMap}
-                    alt="China Map"
-                    className="w-full h-full object-contain"
-                    draggable={false}
-                  />
-                  {formData.position_top && formData.position_left && (
-                    <div
-                      className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 bg-primary rounded-full border-2 border-background shadow-lg flex items-center justify-center"
-                      style={{
-                        top: formData.position_top,
-                        left: formData.position_left,
-                      }}
-                    >
-                      <MapPin className="w-3 h-3 text-primary-foreground" />
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <span>当前坐标：</span>
-                  <span className="font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-sm flex-1">
                     {formData.position_top && formData.position_left 
                       ? `Top: ${formData.position_top}, Left: ${formData.position_left}`
                       : "未选择"}
                   </span>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setIsMapDialogOpen(true)}
+                  >
+                    <Maximize2 className="w-4 h-4" />
+                    打开大地图
+                  </Button>
                   {formData.position_top && (
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-5 px-2 text-xs"
                       onClick={() => setFormData({ ...formData, position_top: "", position_left: "" })}
                     >
                       清除
@@ -497,6 +475,81 @@ const AdminMarketsTab = () => {
           </TableBody>
         </Table>
       </div>
+      {/* Full Screen Map Dialog */}
+      <Dialog open={isMapDialogOpen} onOpenChange={setIsMapDialogOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] h-[90vh] p-0">
+          <div className="relative w-full h-full flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-border bg-background">
+              <div className="flex items-center gap-3">
+                <MapPin className="w-5 h-5 text-primary" />
+                <span className="font-semibold">选择地图坐标</span>
+                <span className="text-sm text-muted-foreground">
+                  点击地图上的位置来设置市场坐标
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                {formData.position_top && formData.position_left && (
+                  <span className="text-sm font-mono bg-muted px-3 py-1 rounded">
+                    Top: {formData.position_top}, Left: {formData.position_left}
+                  </span>
+                )}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsMapDialogOpen(false)}
+                >
+                  <X className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+            <div 
+              className="flex-1 relative cursor-crosshair bg-muted/30 overflow-hidden"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = ((e.clientX - rect.left) / rect.width) * 100;
+                const y = ((e.clientY - rect.top) / rect.height) * 100;
+                setFormData({
+                  ...formData,
+                  position_top: `${y.toFixed(2)}%`,
+                  position_left: `${x.toFixed(2)}%`,
+                });
+              }}
+            >
+              <img
+                src={chinaFarmlandMap}
+                alt="China Map"
+                className="w-full h-full object-contain"
+                draggable={false}
+              />
+              {formData.position_top && formData.position_left && (
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 bg-primary rounded-full border-3 border-background shadow-lg flex items-center justify-center"
+                  style={{
+                    top: formData.position_top,
+                    left: formData.position_left,
+                  }}
+                >
+                  <MapPin className="w-4 h-4 text-primary-foreground" />
+                </motion.div>
+              )}
+            </div>
+            <div className="p-4 border-t border-border bg-background flex justify-end gap-2">
+              <Button variant="outline" onClick={() => setIsMapDialogOpen(false)}>
+                取消
+              </Button>
+              <Button 
+                variant="wallet" 
+                onClick={() => setIsMapDialogOpen(false)}
+                disabled={!formData.position_top || !formData.position_left}
+              >
+                确认位置
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
