@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2, Snowflake, Thermometer, CloudLightning, Wallet, AlertTriangle, History } from "lucide-react";
+import { Sun, CloudRain, Flame, Waves, Wind, Sprout, TrendingUp, Loader2, Snowflake, Thermometer, CloudLightning, Wallet, AlertTriangle, History, CheckCircle, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,7 @@ import AnimatedCounter from "./AnimatedCounter";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useWallet } from "@/hooks/useWallet";
+import { useBettingContract, BETTING_CONTRACT_ADDRESS } from "@/hooks/useBettingContract";
 import type { TrendingMarket } from "./TrendingMarkets";
 
 interface BettingModalProps {
@@ -41,9 +42,8 @@ const weatherIcons: Record<string, React.ReactNode> = {
   storm: <CloudLightning className="w-4 h-4" />,
 };
 
-// Contract address - update this after deploying the contract
-const BETTING_CONTRACT_ADDRESS = ""; // TODO: Set after contract deployment
-const CHARITY_WALLET_ADDRESS = ""; // TODO: Set the charity wallet address
+// 合約是否已部署
+const isContractDeployed = Boolean(BETTING_CONTRACT_ADDRESS);
 
 interface UserBetHistory {
   id: string;
@@ -62,11 +62,13 @@ const BettingModal = ({
   const [yesNoChoice, setYesNoChoice] = useState<"yes" | "no" | null>(null);
   const [amount, setAmount] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [paymentStep, setPaymentStep] = useState<"input" | "wallet" | "processing" | "complete">("input");
+  const [paymentStep, setPaymentStep] = useState<"input" | "wallet" | "approving" | "processing" | "complete">("input");
   const [userBets, setUserBets] = useState<UserBetHistory[]>([]);
   const [isLoadingBets, setIsLoadingBets] = useState(false);
+  const [txHash, setTxHash] = useState<string | null>(null);
   const { toast } = useToast();
   const wallet = useWallet();
+  const bettingContract = useBettingContract();
 
   // Weather is determined by the market (set by admin)
   const marketWeather = market?.weather_condition || "sunny";
@@ -100,6 +102,7 @@ const BettingModal = ({
       setYesNoChoice(null);
       setAmount("");
       setPaymentStep("input");
+      setTxHash(null);
     }
   }, [open]);
 
@@ -160,34 +163,65 @@ const BettingModal = ({
     }
 
     setIsSubmitting(true);
-    setPaymentStep("processing");
-
     const stance = isYesBet ? "yes" : "no";
+    const positionWithWeather = `${marketWeather}_${stance}`;
 
     try {
-      // Transfer USDC to charity wallet (1%)
-      // For now, we transfer to a placeholder address since contract isn't deployed
-      // In production, this would go through the smart contract
-      
-      // TODO: When contract is deployed, use:
-      // const success = await wallet.approveUSDC(BETTING_CONTRACT_ADDRESS, numAmount.toString());
-      // if (!success) throw new Error("USDC 授权失败");
-      
-      // For demo, we'll simulate the blockchain transaction
-      // and just record in database
-      
-      // Create bet record with weather prediction
-      // Position format: "weather_yesno" e.g., "sunny_yes", "rain_no"
-      const positionWithWeather = `${marketWeather}_${stance}`;
-      const { error: betError } = await supabase.from("bets").insert({
-        wallet_address: wallet.address,
-        market_id: market.id,
-        position: positionWithWeather,
-        amount: numAmount,
-      });
+      // 如果合約已部署，使用鏈上交易
+      if (isContractDeployed) {
+        // 檢查授權
+        const hasAllowance = await bettingContract.checkAllowance(numAmount);
+        if (!hasAllowance) {
+          setPaymentStep("approving");
+          toast({
+            title: "正在授權 USDC...",
+            description: "請在 MetaMask 中確認授權交易",
+          });
+          
+          const approved = await bettingContract.approveUsdc(numAmount);
+          if (!approved) {
+            throw new Error("USDC 授權被拒絕");
+          }
+        }
 
-      if (betError) {
-        throw new Error(betError.message);
+        // 下注
+        setPaymentStep("processing");
+        toast({
+          title: "正在下注...",
+          description: "請在 MetaMask 中確認交易",
+        });
+
+        const result = await bettingContract.placeBet(market.id, isYesBet, numAmount);
+        
+        if (!result.success) {
+          throw new Error(result.error || "交易失敗");
+        }
+
+        setTxHash(result.txHash || null);
+
+        // 同步到數據庫 (用於前端顯示)
+        await supabase.from("bets").insert({
+          wallet_address: wallet.address,
+          market_id: market.id,
+          position: positionWithWeather,
+          amount: numAmount,
+        });
+
+      } else {
+        // 合約未部署，使用模擬模式（僅記錄到數據庫）
+        setPaymentStep("processing");
+        
+        toast({
+          title: "⚠️ 模擬模式",
+          description: "合約未部署，此下注僅記錄到數據庫，不會產生實際鏈上交易",
+        });
+
+        await supabase.from("bets").insert({
+          wallet_address: wallet.address,
+          market_id: market.id,
+          position: positionWithWeather,
+          amount: numAmount,
+        });
       }
 
       // Update market pool
@@ -224,10 +258,12 @@ const BettingModal = ({
         setAmount("");
         setIsSubmitting(false);
         setPaymentStep("input");
+        setTxHash(null);
         onOpenChange(false);
-      }, 1500);
+      }, 2500);
 
     } catch (error: any) {
+      console.error("下注失敗:", error);
       toast({
         title: "下注失败",
         description: error.message || "交易失败，请重试",
@@ -523,6 +559,25 @@ const BettingModal = ({
             </motion.div>
           )}
 
+          {/* Contract Status Notice */}
+          {!isContractDeployed && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-yellow-500/10 rounded-xl p-3 border border-yellow-500/30"
+            >
+              <div className="flex items-start gap-2 text-yellow-700 dark:text-yellow-400">
+                <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <div className="text-xs">
+                  <p className="font-medium">模擬模式</p>
+                  <p className="mt-1 text-yellow-600 dark:text-yellow-500">
+                    合約尚未部署。下注將僅記錄到數據庫，不會產生實際鏈上交易。
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          )}
+
           {/* Confirm Button */}
           <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
             {paymentStep === "wallet" ? (
@@ -534,6 +589,15 @@ const BettingModal = ({
                 <Wallet className="w-5 h-5" />
                 连接 MetaMask 钱包
               </Button>
+            ) : paymentStep === "approving" ? (
+              <Button
+                disabled
+                className="w-full h-12 text-base font-semibold"
+                variant="default"
+              >
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                授權 USDC 中...
+              </Button>
             ) : paymentStep === "processing" ? (
               <Button
                 disabled
@@ -541,16 +605,30 @@ const BettingModal = ({
                 variant="default"
               >
                 <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                处理中...
+                交易處理中...
               </Button>
             ) : paymentStep === "complete" ? (
-              <Button
-                disabled
-                className="w-full h-12 text-base font-semibold bg-accent hover:bg-accent"
-                variant="default"
-              >
-                ✓ 下注成功
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  disabled
+                  className="w-full h-12 text-base font-semibold bg-accent hover:bg-accent"
+                  variant="default"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  下注成功！
+                </Button>
+                {txHash && (
+                  <a
+                    href={`https://sepolia.etherscan.io/tx/${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-1 text-xs text-accent hover:underline"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    在 Etherscan 查看交易
+                  </a>
+                )}
+              </div>
             ) : (
               <Button
                 onClick={handleConfirm}
@@ -559,7 +637,9 @@ const BettingModal = ({
                 variant="default"
               >
                 {!yesNoChoice ? "请选择 是/否" : (
-                  wallet.isConnected ? "确认下注 (Confirm Bet)" : "连接钱包并下注"
+                  wallet.isConnected 
+                    ? (isContractDeployed ? "確認下注 (鏈上交易)" : "確認下注 (模擬)")
+                    : "连接钱包并下注"
                 )}
               </Button>
             )}
