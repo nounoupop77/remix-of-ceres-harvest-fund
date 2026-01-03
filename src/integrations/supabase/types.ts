@@ -101,10 +101,13 @@ export type Database = {
           charity_contribution: number
           city: string
           created_at: string
+          crop: string | null
           description: string | null
           end_date: string
           id: string
           no_pool: number
+          position_left: string | null
+          position_top: string | null
           province: string
           result: string | null
           start_date: string
@@ -118,10 +121,13 @@ export type Database = {
           charity_contribution?: number
           city: string
           created_at?: string
+          crop?: string | null
           description?: string | null
           end_date: string
           id?: string
           no_pool?: number
+          position_left?: string | null
+          position_top?: string | null
           province: string
           result?: string | null
           start_date?: string
@@ -135,10 +141,13 @@ export type Database = {
           charity_contribution?: number
           city?: string
           created_at?: string
+          crop?: string | null
           description?: string | null
           end_date?: string
           id?: string
           no_pool?: number
+          position_left?: string | null
+          position_top?: string | null
           province?: string
           result?: string | null
           start_date?: string

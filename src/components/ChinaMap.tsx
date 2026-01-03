@@ -1,248 +1,45 @@
-import { useState } from "react";
-import { Sun, CloudRain, Flame, Waves, Wind } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Sun, CloudRain, Flame, Waves, Wind, Loader2 } from "lucide-react";
 import chinaFarmlandMap from "@/assets/china-farmland-map.png";
+import { supabase } from "@/integrations/supabase/client";
 
 export type WeatherType = "sunny" | "rain" | "drought" | "flood" | "typhoon";
 
-export interface CityHotspot {
+export interface MarketHotspot {
   id: string;
   city: string;
   province: string;
-  shortProvince: string;
   weather: WeatherType;
   weatherStatus: string;
   crop: string;
   poolSize: number;
   position: { top: string; left: string };
+  title: string;
+  endDate: string;
 }
 
-// 20 city hotspots with precise geographic coordinates
-const cityHotspots: CityHotspot[] = [
-  // 东北组 (黑土地)
-  {
-    id: "hulunbuir",
-    city: "呼伦贝尔",
-    province: "内蒙古",
-    shortProvince: "蒙",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "春小麦",
-    poolSize: 210000,
-    position: { top: "15.2%", left: "68.8%" },
-  },
-  {
-    id: "harbin",
-    city: "哈尔滨",
-    province: "黑龙江",
-    shortProvince: "黑",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "水稻/大豆",
-    poolSize: 420000,
-    position: { top: "19.1%", left: "79.6%" },
-  },
-  {
-    id: "suihua",
-    city: "绥化",
-    province: "黑龙江",
-    shortProvince: "黑",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "玉米/大豆",
-    poolSize: 380000,
-    position: { top: "22.0%", left: "80.7%" },
-  },
-  {
-    id: "changchun",
-    city: "长春",
-    province: "吉林",
-    shortProvince: "吉",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "玉米",
-    poolSize: 350000,
-    position: { top: "25.4%", left: "79.0%" },
-  },
-  // 华北/中原组 (旱地之魂)
-  {
-    id: "shijiazhuang",
-    city: "石家庄",
-    province: "河北",
-    shortProvince: "冀",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "小麦",
-    poolSize: 290000,
-    position: { top: "42.3%", left: "63.2%" },
-  },
-  {
-    id: "weifang",
-    city: "潍坊",
-    province: "山东",
-    shortProvince: "鲁",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "蔬菜/小麦",
-    poolSize: 320000,
-    position: { top: "46.1%", left: "68.1%" },
-  },
-  {
-    id: "dezhou",
-    city: "德州",
-    province: "山东",
-    shortProvince: "鲁",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "小麦/玉米",
-    poolSize: 280000,
-    position: { top: "44.8%", left: "66.5%" },
-  },
-  {
-    id: "zhumadian",
-    city: "驻马店",
-    province: "河南",
-    shortProvince: "豫",
-    weather: "drought",
-    weatherStatus: "干旱",
-    crop: "小麦/玉米",
-    poolSize: 456000,
-    position: { top: "52.8%", left: "66.4%" },
-  },
-  {
-    id: "nanyang",
-    city: "南阳",
-    province: "河南",
-    shortProvince: "豫",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "小麦",
-    poolSize: 310000,
-    position: { top: "53.7%", left: "64.7%" },
-  },
-  {
-    id: "fuyang",
-    city: "阜阳",
-    province: "安徽",
-    shortProvince: "皖",
-    weather: "rain",
-    weatherStatus: "小雨",
-    crop: "小麦/水稻",
-    poolSize: 275000,
-    position: { top: "54.4%", left: "68.1%" },
-  },
-  // 南方/长江组 (水田带)
-  {
-    id: "chengdu",
-    city: "成都",
-    province: "四川",
-    shortProvince: "川",
-    weather: "rain",
-    weatherStatus: "小雨",
-    crop: "水稻",
-    poolSize: 156000,
-    position: { top: "61.5%", left: "50.2%" },
-  },
-  {
-    id: "xiangyang",
-    city: "襄阳",
-    province: "湖北",
-    shortProvince: "鄂",
-    weather: "rain",
-    weatherStatus: "小雨",
-    crop: "小麦/水稻",
-    poolSize: 245000,
-    position: { top: "59.4%", left: "61.1%" },
-  },
-  {
-    id: "changde",
-    city: "常德",
-    province: "湖南",
-    shortProvince: "湘",
-    weather: "flood",
-    weatherStatus: "暴雨",
-    crop: "水稻",
-    poolSize: 198000,
-    position: { top: "66.2%", left: "63.4%" },
-  },
-  {
-    id: "shangrao",
-    city: "上饶",
-    province: "江西",
-    shortProvince: "赣",
-    weather: "rain",
-    weatherStatus: "小雨",
-    crop: "水稻",
-    poolSize: 165000,
-    position: { top: "66.1%", left: "71.2%" },
-  },
-  {
-    id: "ganzhou",
-    city: "赣州",
-    province: "江西",
-    shortProvince: "赣",
-    weather: "rain",
-    weatherStatus: "小雨",
-    crop: "水稻/脐橙",
-    poolSize: 185000,
-    position: { top: "72.2%", left: "68.2%" },
-  },
-  {
-    id: "yancheng",
-    city: "盐城",
-    province: "江苏",
-    shortProvince: "苏",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "水稻",
-    poolSize: 295000,
-    position: { top: "47.8%", left: "70.9%" },
-  },
-  // 华南/西部组
-  {
-    id: "zhanjiang",
-    city: "湛江",
-    province: "广东",
-    shortProvince: "粤西",
-    weather: "typhoon",
-    weatherStatus: "台风预警",
-    crop: "糖蔗/水稻",
-    poolSize: 145000,
-    position: { top: "80.5%", left: "61.6%" },
-  },
-  {
-    id: "maoming",
-    city: "茂名",
-    province: "广东",
-    shortProvince: "粤",
-    weather: "typhoon",
-    weatherStatus: "台风预警",
-    crop: "荔枝/水稻",
-    poolSize: 135000,
-    position: { top: "78.5%", left: "62.6%" },
-  },
-  {
-    id: "nanning",
-    city: "南宁",
-    province: "广西",
-    shortProvince: "桂",
-    weather: "rain",
-    weatherStatus: "小雨",
-    crop: "甘蔗/水稻",
-    poolSize: 175000,
-    position: { top: "76.5%", left: "57.9%" },
-  },
-  {
-    id: "akesu",
-    city: "阿克苏",
-    province: "新疆",
-    shortProvince: "新",
-    weather: "sunny",
-    weatherStatus: "晴朗",
-    crop: "棉花/苹果",
-    poolSize: 220000,
-    position: { top: "31.2%", left: "25.4%" },
-  },
-];
+// Map weather_condition from DB to WeatherType
+const weatherConditionMap: Record<string, WeatherType> = {
+  drought: "drought",
+  flood: "flood",
+  frost: "sunny",
+  heatwave: "drought",
+  storm: "typhoon",
+  sunny: "sunny",
+  rain: "rain",
+  typhoon: "typhoon",
+};
+
+const weatherStatusMap: Record<string, string> = {
+  drought: "干旱",
+  flood: "洪涝",
+  frost: "霜冻",
+  heatwave: "高温",
+  storm: "暴风雨",
+  sunny: "晴朗",
+  rain: "小雨",
+  typhoon: "台风预警",
+};
 
 const weatherIcons: Record<WeatherType, React.ReactNode> = {
   sunny: <Sun className="w-3 h-3" />,
@@ -291,6 +88,10 @@ export interface Province {
   weather: WeatherType;
   crop: string;
   poolSize: number;
+  title?: string;
+  city?: string;
+  province?: string;
+  endDate?: string;
 }
 
 interface ChinaMapProps {
@@ -298,18 +99,76 @@ interface ChinaMapProps {
 }
 
 const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
-  const [hoveredHotspot, setHoveredHotspot] = useState<CityHotspot | null>(null);
+  const [hoveredHotspot, setHoveredHotspot] = useState<MarketHotspot | null>(null);
+  const [markets, setMarkets] = useState<MarketHotspot[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleCityClick = (city: CityHotspot) => {
+  useEffect(() => {
+    const fetchMarkets = async () => {
+      const { data, error } = await supabase
+        .from("markets")
+        .select("*")
+        .eq("status", "active")
+        .not("position_top", "is", null)
+        .not("position_left", "is", null);
+
+      if (!error && data) {
+        const hotspots: MarketHotspot[] = data.map((market) => ({
+          id: market.id,
+          city: market.city,
+          province: market.province,
+          weather: weatherConditionMap[market.weather_condition] || "sunny",
+          weatherStatus: weatherStatusMap[market.weather_condition] || market.weather_condition,
+          crop: market.crop || "农作物",
+          poolSize: market.yes_pool + market.no_pool,
+          position: { top: market.position_top!, left: market.position_left! },
+          title: market.title,
+          endDate: market.end_date,
+        }));
+        setMarkets(hotspots);
+      }
+      setIsLoading(false);
+    };
+
+    fetchMarkets();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel("markets-map")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "markets" },
+        () => fetchMarkets()
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
+  const handleCityClick = (market: MarketHotspot) => {
     const province: Province = {
-      id: city.id,
-      name: city.city,
-      weather: city.weather,
-      crop: city.crop,
-      poolSize: city.poolSize,
+      id: market.id,
+      name: market.city,
+      weather: market.weather,
+      crop: market.crop,
+      poolSize: market.poolSize,
+      title: market.title,
+      city: market.city,
+      province: market.province,
+      endDate: market.endDate,
     };
     onProvinceClick(province);
   };
+
+  if (isLoading) {
+    return (
+      <div className="relative w-full flex justify-center items-center min-h-[400px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full flex justify-center">
@@ -324,44 +183,53 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
           draggable={false}
         />
 
-        {/* City Hotspots - Smaller with pulse animation */}
-        {cityHotspots.map((city) => (
-          <div
-            key={city.id}
-            className="absolute"
-            style={{
-              top: city.position.top,
-              left: city.position.left,
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            {/* Ping animation layer */}
-            <span
-              className={`absolute inset-0 w-7 h-7 rounded-full ${weatherPingColors[city.weather]} animate-[ping-slow_3s_ease-in-out_infinite]`}
-            />
-            
-            {/* Main hotspot button with drop-shadow */}
-            <button
-              className={`relative w-7 h-7 rounded-full
-                transition-all duration-300 border-[1.5px] backdrop-blur-sm
-                ${weatherBgColors[city.weather]} ${weatherBorderColors[city.weather]}
-                hover:scale-125 hover:shadow-lg cursor-pointer
-                flex items-center justify-center z-10
-                drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]
-              `}
-              onMouseEnter={() => setHoveredHotspot(city)}
-              onMouseLeave={() => setHoveredHotspot(null)}
-              onClick={() => handleCityClick(city)}
-              aria-label={`${city.city} - ${city.weatherStatus}`}
-            >
-              {city.weather === "sunny" && <Sun className="w-3.5 h-3.5 text-foreground/80" />}
-              {city.weather === "rain" && <CloudRain className="w-3.5 h-3.5 text-foreground/80" />}
-              {city.weather === "drought" && <Flame className="w-3.5 h-3.5 text-foreground/80" />}
-              {city.weather === "flood" && <Waves className="w-3.5 h-3.5 text-foreground/80" />}
-              {city.weather === "typhoon" && <Wind className="w-3.5 h-3.5 text-foreground/80" />}
-            </button>
+        {/* Market Hotspots from database */}
+        {markets.length === 0 ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="glass rounded-xl p-4 text-center">
+              <p className="text-muted-foreground text-sm">暂无活跃市场</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">请在后台创建博弈市场</p>
+            </div>
           </div>
-        ))}
+        ) : (
+          markets.map((market) => (
+            <div
+              key={market.id}
+              className="absolute"
+              style={{
+                top: market.position.top,
+                left: market.position.left,
+                transform: "translate(-50%, -50%)",
+              }}
+            >
+              {/* Ping animation layer */}
+              <span
+                className={`absolute inset-0 w-7 h-7 rounded-full ${weatherPingColors[market.weather]} animate-[ping-slow_3s_ease-in-out_infinite]`}
+              />
+              
+              {/* Main hotspot button with drop-shadow */}
+              <button
+                className={`relative w-7 h-7 rounded-full
+                  transition-all duration-300 border-[1.5px] backdrop-blur-sm
+                  ${weatherBgColors[market.weather]} ${weatherBorderColors[market.weather]}
+                  hover:scale-125 hover:shadow-lg cursor-pointer
+                  flex items-center justify-center z-10
+                  drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]
+                `}
+                onMouseEnter={() => setHoveredHotspot(market)}
+                onMouseLeave={() => setHoveredHotspot(null)}
+                onClick={() => handleCityClick(market)}
+                aria-label={`${market.city} - ${market.weatherStatus}`}
+              >
+                {market.weather === "sunny" && <Sun className="w-3.5 h-3.5 text-foreground/80" />}
+                {market.weather === "rain" && <CloudRain className="w-3.5 h-3.5 text-foreground/80" />}
+                {market.weather === "drought" && <Flame className="w-3.5 h-3.5 text-foreground/80" />}
+                {market.weather === "flood" && <Waves className="w-3.5 h-3.5 text-foreground/80" />}
+                {market.weather === "typhoon" && <Wind className="w-3.5 h-3.5 text-foreground/80" />}
+              </button>
+            </div>
+          ))
+        )}
 
         {/* Tooltip */}
         {hoveredHotspot && (
@@ -382,7 +250,7 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
                 </div>
                 <div>
                   <p className="font-semibold text-foreground text-sm">
-                    {hoveredHotspot.city} ({hoveredHotspot.shortProvince})
+                    {hoveredHotspot.city} ({hoveredHotspot.province})
                   </p>
                   <p className="text-xs text-muted-foreground">
                     {hoveredHotspot.crop}产区
@@ -437,4 +305,4 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
 };
 
 export default ChinaMap;
-export { weatherIcons, weatherLabels, cityHotspots };
+export { weatherIcons, weatherLabels };
