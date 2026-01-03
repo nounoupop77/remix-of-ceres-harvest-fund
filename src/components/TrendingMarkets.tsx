@@ -1,5 +1,7 @@
+import { motion } from "framer-motion";
 import { Flame, TrendingUp, Sun, CloudRain, Wind, Waves } from "lucide-react";
 import { Province, WeatherType } from "./ChinaMap";
+import AnimatedCounter from "./AnimatedCounter";
 
 interface TrendingMarketsProps {
   onMarketClick: (province: Province) => void;
@@ -111,12 +113,40 @@ const weatherIconColors: Record<WeatherType, string> = {
   typhoon: "text-weather-typhoon",
 };
 
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1,
+      delayChildren: 0.8,
+    },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 40 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: {
+      duration: 0.5,
+      ease: [0.22, 1, 0.36, 1] as const,
+    },
+  },
+};
+
 const TrendingMarkets = ({ onMarketClick }: TrendingMarketsProps) => {
   return (
     <section className="py-8">
       <div className="container mx-auto px-4">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.6, duration: 0.5 }}
+          className="flex items-center gap-3 mb-6"
+        >
           <div className="flex items-center gap-2">
             <Flame className="w-5 h-5 text-primary" />
             <h2 className="text-xl font-serif font-semibold text-foreground">
@@ -124,27 +154,55 @@ const TrendingMarkets = ({ onMarketClick }: TrendingMarketsProps) => {
             </h2>
           </div>
           <span className="text-sm text-muted-foreground">(Trending)</span>
-        </div>
+        </motion.div>
 
         {/* Horizontal Scrolling Cards */}
-        <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
-          {trendingMarkets.map((market) => (
-            <div
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide"
+        >
+          {trendingMarkets.map((market, index) => (
+            <motion.div
               key={market.province.id}
+              variants={cardVariants}
               onClick={() => onMarketClick(market.province)}
-              className="flex-shrink-0 w-64 bg-card rounded-2xl p-4 border border-border shadow-soft hover:shadow-medium transition-all cursor-pointer hover:-translate-y-1 group"
+              whileHover={{
+                y: -8,
+                transition: { duration: 0.2 },
+              }}
+              className="flex-shrink-0 w-64 bg-card rounded-2xl p-4 border border-border shadow-soft cursor-pointer group relative overflow-hidden"
+              style={{
+                boxShadow: "0 4px 20px -4px hsl(var(--primary) / 0.08)",
+              }}
             >
+              {/* Hover glow effect */}
+              <motion.div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                style={{
+                  background: "radial-gradient(circle at center, hsl(var(--accent) / 0.08) 0%, transparent 70%)",
+                }}
+              />
+
               {/* Header */}
-              <div className="flex items-start justify-between mb-3">
-                <div
-                  className={`p-2.5 rounded-xl ${
-                    weatherBgColors[market.province.weather]
-                  }`}
+              <div className="flex items-start justify-between mb-3 relative z-10">
+                <motion.div
+                  className={`p-2.5 rounded-xl ${weatherBgColors[market.province.weather]}`}
+                  animate={{
+                    scale: [1, 1.05, 1],
+                  }}
+                  transition={{
+                    duration: 2,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: index * 0.2,
+                  }}
                 >
                   <div className={weatherIconColors[market.province.weather]}>
                     {weatherIcons[market.province.weather]}
                   </div>
-                </div>
+                </motion.div>
                 <div
                   className={`flex items-center gap-1 text-sm font-medium ${
                     market.trend === "up" ? "text-accent" : "text-destructive"
@@ -160,7 +218,7 @@ const TrendingMarkets = ({ onMarketClick }: TrendingMarketsProps) => {
               </div>
 
               {/* Content */}
-              <div className="mb-3">
+              <div className="mb-3 relative z-10">
                 <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
                   {market.city} ({market.provinceName}) · {weatherLabels[market.province.weather]}
                 </h3>
@@ -170,15 +228,20 @@ const TrendingMarkets = ({ onMarketClick }: TrendingMarketsProps) => {
               </div>
 
               {/* Pool Info */}
-              <div className="flex items-center justify-between pt-3 border-t border-border">
+              <div className="flex items-center justify-between pt-3 border-t border-border relative z-10">
                 <span className="text-xs text-muted-foreground">资金池</span>
                 <span className="text-sm font-semibold text-accent">
-                  ${(market.province.poolSize / 1000).toFixed(0)}K
+                  <AnimatedCounter
+                    value={market.province.poolSize / 1000}
+                    prefix="$"
+                    suffix="K"
+                    duration={1.5 + index * 0.2}
+                  />
                 </span>
               </div>
 
               {/* Odds Preview */}
-              <div className="mt-2 flex gap-2">
+              <div className="mt-2 flex gap-2 relative z-10">
                 <div className="flex-1 text-center py-1.5 bg-accent/10 rounded-lg">
                   <span className="text-xs font-medium text-accent">
                     YES 2.35x
@@ -190,9 +253,9 @@ const TrendingMarkets = ({ onMarketClick }: TrendingMarketsProps) => {
                   </span>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       </div>
     </section>
   );
