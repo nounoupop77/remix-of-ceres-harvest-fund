@@ -176,7 +176,7 @@ const BettingModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-card border-border shadow-medium">
+      <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto bg-card border-border shadow-medium">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-3 text-xl">
             <span className="font-serif">{market.city}</span>

@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 interface HistoryDrawerProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  refreshTrigger?: number;
 }
 
 type BetStatus = "pending" | "won" | "lost";
@@ -66,13 +67,32 @@ const statusConfig: Record<
   },
 };
 
-const HistoryDrawer = ({ open, onOpenChange }: HistoryDrawerProps) => {
+const HistoryDrawer = ({ open, onOpenChange, refreshTrigger }: HistoryDrawerProps) => {
   const [bets, setBets] = useState<BetRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
+  const fetchBets = async (currentUser: any) => {
+    if (!currentUser) return;
+    
+    setIsLoading(true);
+    const { data, error } = await supabase
+      .from("bets")
+      .select(`
+        *,
+        markets (title, city, province, weather_condition, yes_pool, no_pool, end_date, result, status)
+      `)
+      .eq("user_id", currentUser.id)
+      .order("created_at", { ascending: false });
+
+    if (!error && data) {
+      setBets(data as unknown as BetRecord[]);
+    }
+    setIsLoading(false);
+  };
+
   useEffect(() => {
-    const fetchUserAndBets = async () => {
+    const checkUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       setUser(user);
       
@@ -81,25 +101,20 @@ const HistoryDrawer = ({ open, onOpenChange }: HistoryDrawerProps) => {
         return;
       }
 
-      const { data, error } = await supabase
-        .from("bets")
-        .select(`
-          *,
-          markets (title, city, province, weather_condition, yes_pool, no_pool, end_date, result, status)
-        `)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (!error && data) {
-        setBets(data as unknown as BetRecord[]);
+      if (open) {
+        await fetchBets(user);
       }
-      setIsLoading(false);
     };
 
-    if (open) {
-      fetchUserAndBets();
-    }
+    checkUser();
   }, [open]);
+
+  // Refresh bets when refreshTrigger changes
+  useEffect(() => {
+    if (refreshTrigger && user) {
+      fetchBets(user);
+    }
+  }, [refreshTrigger, user]);
 
   const pendingBets = bets.filter((b) => b.status === "pending");
   const settledBets = bets.filter((b) => b.status !== "pending");
