@@ -49,7 +49,7 @@ const Index = () => {
 
           {/* China Map */}
           <section className="container mx-auto px-4">
-            <div className="bg-card/50 rounded-3xl border border-border shadow-soft pt-1 px-4 pb-4 sm:pt-1.5 sm:px-6 sm:pb-6 backdrop-blur-sm">
+            <div className="bg-card/50 rounded-3xl border border-border shadow-soft p-4 sm:p-6 backdrop-blur-sm">
               <ChinaMap onProvinceClick={handleProvinceClick} />
             </div>
           </section>
@@ -64,8 +64,7 @@ const Index = () => {
             <p className="text-sm text-muted-foreground">
               © 2026 Ceres · 息壤 — 去中心化农业再生金融协议
             </p>
-            <p className="text-xs mt-1 text-primary">Created By: 
-@C87938xiaochong</p>
+            <p className="text-xs mt-1 text-primary">Created By:  @C87938xiaochong & @bzdjiaosm_xiao7</p>
           </div>
         </footer>
 
