@@ -5,9 +5,7 @@ import {
   Shield,
   LogOut,
   TrendingUp,
-  Users,
   Heart,
-  Plus,
   Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -16,7 +14,6 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import BokehBackground from "@/components/BokehBackground";
 import AdminMarketsTab from "@/components/admin/AdminMarketsTab";
-import AdminBetsTab from "@/components/admin/AdminBetsTab";
 import AdminCharityTab from "@/components/admin/AdminCharityTab";
 import type { User } from "@supabase/supabase-js";
 
@@ -140,14 +137,10 @@ const Admin = () => {
             transition={{ duration: 0.5 }}
           >
             <Tabs defaultValue="markets" className="space-y-6">
-              <TabsList className="grid w-full max-w-md grid-cols-3 bg-card/50">
+              <TabsList className="grid w-full max-w-md grid-cols-2 bg-card/50">
                 <TabsTrigger value="markets" className="gap-2">
                   <TrendingUp className="w-4 h-4" />
                   <span className="hidden sm:inline">博弈市场</span>
-                </TabsTrigger>
-                <TabsTrigger value="bets" className="gap-2">
-                  <Users className="w-4 h-4" />
-                  <span className="hidden sm:inline">用户博弈</span>
                 </TabsTrigger>
                 <TabsTrigger value="charity" className="gap-2">
                   <Heart className="w-4 h-4" />
@@ -157,10 +150,6 @@ const Admin = () => {
 
               <TabsContent value="markets">
                 <AdminMarketsTab />
-              </TabsContent>
-
-              <TabsContent value="bets">
-                <AdminBetsTab />
               </TabsContent>
 
               <TabsContent value="charity">

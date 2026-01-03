@@ -107,35 +107,78 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
 
   useEffect(() => {
     const fetchMarkets = async () => {
-      const { data, error } = await supabase
+      // Fetch markets with position data
+      const { data: marketsData, error: marketsError } = await supabase
         .from("markets")
         .select("*")
         .eq("status", "active")
         .not("position_top", "is", null)
         .not("position_left", "is", null);
 
-      if (!error && data) {
-        const hotspots: MarketHotspot[] = data.map((market) => ({
+      if (marketsError || !marketsData) {
+        setIsLoading(false);
+        return;
+      }
+
+      // Fetch all bets to determine most-bet weather per market
+      const { data: betsData } = await supabase
+        .from("bets")
+        .select("market_id, position");
+
+      // Calculate most-bet weather for each market
+      const weatherCountByMarket: Record<string, Record<string, number>> = {};
+      
+      if (betsData) {
+        betsData.forEach((bet) => {
+          if (!weatherCountByMarket[bet.market_id]) {
+            weatherCountByMarket[bet.market_id] = {};
+          }
+          // Position contains weather type like "sunny_yes", "rain_no", etc.
+          const weatherType = bet.position.split("_")[0];
+          weatherCountByMarket[bet.market_id][weatherType] = 
+            (weatherCountByMarket[bet.market_id][weatherType] || 0) + 1;
+        });
+      }
+
+      const hotspots: MarketHotspot[] = marketsData.map((market) => {
+        // Find most-bet weather for this market
+        const weatherCounts = weatherCountByMarket[market.id] || {};
+        let mostBetWeather = "sunny"; // default
+        let maxCount = 0;
+        
+        Object.entries(weatherCounts).forEach(([weather, count]) => {
+          if (count > maxCount) {
+            maxCount = count;
+            mostBetWeather = weather;
+          }
+        });
+
+        const weatherType = weatherConditionMap[mostBetWeather] || "sunny";
+        const weatherStatus = maxCount > 0 
+          ? weatherStatusMap[mostBetWeather] || "开放预测"
+          : "开放预测";
+
+        return {
           id: market.id,
           city: market.city,
           province: market.province,
-          weather: weatherConditionMap[market.weather_condition] || "sunny",
-          weatherStatus: weatherStatusMap[market.weather_condition] || market.weather_condition,
+          weather: weatherType,
+          weatherStatus: weatherStatus,
           crop: market.crop || "农作物",
           poolSize: market.yes_pool + market.no_pool,
           position: { top: market.position_top!, left: market.position_left! },
           title: market.title,
           endDate: market.end_date,
-        }));
-        setMarkets(hotspots);
-      }
+        };
+      });
+      setMarkets(hotspots);
       setIsLoading(false);
     };
 
     fetchMarkets();
 
-    // Subscribe to realtime updates
-    const channel = supabase
+    // Subscribe to realtime updates for both markets and bets
+    const marketsChannel = supabase
       .channel("markets-map")
       .on(
         "postgres_changes",
@@ -144,8 +187,18 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
       )
       .subscribe();
 
+    const betsChannel = supabase
+      .channel("bets-map")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "bets" },
+        () => fetchMarkets()
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(marketsChannel);
+      supabase.removeChannel(betsChannel);
     };
   }, []);
 

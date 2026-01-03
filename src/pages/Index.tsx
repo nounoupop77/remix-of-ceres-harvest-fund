@@ -31,7 +31,7 @@ const Index = () => {
 
       if (!error && data) {
         const total = data.reduce((sum, record) => sum + record.amount, 0);
-        setCharityPoolAmount(total / 1000); // Convert to K
+        setCharityPoolAmount(total); // Keep actual amount
       }
     };
 
@@ -84,7 +84,7 @@ const Index = () => {
     // Update charity pool after particle animation
     setTimeout(() => {
       const donation = amount * 0.01; // 1% donation
-      setCharityPoolAmount((prev) => prev + donation / 1000); // Convert to K
+      setCharityPoolAmount((prev) => prev + donation); // Keep actual amount
     }, 1200);
   }, []);
 

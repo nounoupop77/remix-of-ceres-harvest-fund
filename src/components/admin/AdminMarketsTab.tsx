@@ -479,37 +479,43 @@ const AdminMarketsTab = () => {
               </div>
             </div>
             <div 
-              className="flex-1 relative cursor-crosshair bg-muted/30 overflow-hidden"
-              onClick={(e) => {
-                const rect = e.currentTarget.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                setFormData({
-                  ...formData,
-                  position_top: `${y.toFixed(2)}%`,
-                  position_left: `${x.toFixed(2)}%`,
-                });
-              }}
+              className="flex-1 relative cursor-crosshair bg-muted/30 overflow-hidden flex justify-center items-center"
             >
-              <img
-                src={chinaFarmlandMap}
-                alt="China Map"
-                className="w-full h-full object-contain"
-                draggable={false}
-              />
-              {formData.position_top && formData.position_left && (
-                <motion.div
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute w-8 h-8 -translate-x-1/2 -translate-y-1/2 bg-primary rounded-full border-3 border-background shadow-lg flex items-center justify-center"
-                  style={{
-                    top: formData.position_top,
-                    left: formData.position_left,
-                  }}
-                >
-                  <MapPin className="w-4 h-4 text-primary-foreground" />
-                </motion.div>
-              )}
+              <div 
+                className="relative w-full max-w-[65rem] aspect-[4/3]"
+                onClick={(e) => {
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const x = ((e.clientX - rect.left) / rect.width) * 100;
+                  const y = ((e.clientY - rect.top) / rect.height) * 100;
+                  setFormData({
+                    ...formData,
+                    position_top: `${y.toFixed(2)}%`,
+                    position_left: `${x.toFixed(2)}%`,
+                  });
+                }}
+              >
+                <img
+                  src={chinaFarmlandMap}
+                  alt="China Map"
+                  className="w-full h-full object-contain scale-[1.3] origin-center"
+                  style={{ filter: "brightness(0.96) sepia(0.05)" }}
+                  draggable={false}
+                />
+                {formData.position_top && formData.position_left && (
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    className="absolute w-7 h-7 bg-primary rounded-full border-2 border-background shadow-lg flex items-center justify-center"
+                    style={{
+                      top: formData.position_top,
+                      left: formData.position_left,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  >
+                    <MapPin className="w-4 h-4 text-primary-foreground" />
+                  </motion.div>
+                )}
+              </div>
             </div>
             <div className="p-4 border-t border-border bg-background flex justify-end gap-2">
               <Button variant="outline" onClick={() => setIsMapDialogOpen(false)}>

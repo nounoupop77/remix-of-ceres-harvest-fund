@@ -76,7 +76,7 @@ const Navbar = ({
                 animate={{ scale: 1 }}
                 className="ml-1 text-xs font-semibold text-accent"
               >
-                <AnimatedCounter value={charityPoolAmount} prefix="$" suffix="K" />
+                $<AnimatedCounter value={charityPoolAmount} decimals={2} />
               </motion.span>
             )}
           </Button>
