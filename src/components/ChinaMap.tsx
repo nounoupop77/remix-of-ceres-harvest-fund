@@ -16,8 +16,9 @@ export interface CityHotspot {
   position: { top: string; left: string };
 }
 
-// 10 city hotspots with precise geographic coordinates
+// 20 city hotspots with precise geographic coordinates
 const cityHotspots: CityHotspot[] = [
+  // 东北组 (黑土地)
   {
     id: "hulunbuir",
     city: "呼伦贝尔",
@@ -27,19 +28,42 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "春小麦",
     poolSize: 210000,
-    position: { top: "15%", left: "78%" },
+    position: { top: "12%", left: "76%" },
+  },
+  {
+    id: "harbin",
+    city: "哈尔滨",
+    province: "黑龙江",
+    shortProvince: "黑",
+    weather: "sunny",
+    weatherStatus: "晴朗",
+    crop: "水稻/大豆",
+    poolSize: 420000,
+    position: { top: "20%", left: "86%" },
   },
   {
     id: "suihua",
     city: "绥化",
     province: "黑龙江",
-    shortProvince: "黑龙江",
+    shortProvince: "黑",
     weather: "sunny",
     weatherStatus: "晴朗",
     crop: "玉米/大豆",
     poolSize: 380000,
-    position: { top: "22%", left: "85%" },
+    position: { top: "24%", left: "84%" },
   },
+  {
+    id: "changchun",
+    city: "长春",
+    province: "吉林",
+    shortProvince: "吉",
+    weather: "sunny",
+    weatherStatus: "晴朗",
+    crop: "玉米",
+    poolSize: 350000,
+    position: { top: "28%", left: "82%" },
+  },
+  // 华北/中原组 (旱地之魂)
   {
     id: "shijiazhuang",
     city: "石家庄",
@@ -49,7 +73,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "小麦",
     poolSize: 290000,
-    position: { top: "36%", left: "70%" },
+    position: { top: "38%", left: "71%" },
   },
   {
     id: "weifang",
@@ -60,7 +84,18 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "蔬菜/小麦",
     poolSize: 320000,
-    position: { top: "38%", left: "76%" },
+    position: { top: "40%", left: "78%" },
+  },
+  {
+    id: "dezhou",
+    city: "德州",
+    province: "山东",
+    shortProvince: "鲁",
+    weather: "sunny",
+    weatherStatus: "晴朗",
+    crop: "小麦/玉米",
+    poolSize: 280000,
+    position: { top: "42%", left: "74%" },
   },
   {
     id: "zhumadian",
@@ -71,7 +106,18 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "干旱",
     crop: "小麦/玉米",
     poolSize: 456000,
-    position: { top: "48%", left: "68%" },
+    position: { top: "48%", left: "69%" },
+  },
+  {
+    id: "nanyang",
+    city: "南阳",
+    province: "河南",
+    shortProvince: "豫",
+    weather: "sunny",
+    weatherStatus: "晴朗",
+    crop: "小麦",
+    poolSize: 310000,
+    position: { top: "51%", left: "66%" },
   },
   {
     id: "fuyang",
@@ -82,8 +128,9 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "小麦/水稻",
     poolSize: 275000,
-    position: { top: "52%", left: "73%" },
+    position: { top: "53%", left: "72%" },
   },
+  // 南方/长江组 (水田带)
   {
     id: "chengdu",
     city: "成都",
@@ -93,7 +140,18 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻",
     poolSize: 156000,
-    position: { top: "60%", left: "48%" },
+    position: { top: "60%", left: "52%" },
+  },
+  {
+    id: "xiangyang",
+    city: "襄阳",
+    province: "湖北",
+    shortProvince: "鄂",
+    weather: "rain",
+    weatherStatus: "小雨",
+    crop: "小麦/水稻",
+    poolSize: 245000,
+    position: { top: "56%", left: "65%" },
   },
   {
     id: "changde",
@@ -104,7 +162,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "暴雨",
     crop: "水稻",
     poolSize: 198000,
-    position: { top: "65%", left: "62%" },
+    position: { top: "64%", left: "64%" },
   },
   {
     id: "shangrao",
@@ -115,8 +173,31 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻",
     poolSize: 165000,
-    position: { top: "68%", left: "74%" },
+    position: { top: "66%", left: "73%" },
   },
+  {
+    id: "ganzhou",
+    city: "赣州",
+    province: "江西",
+    shortProvince: "赣",
+    weather: "rain",
+    weatherStatus: "小雨",
+    crop: "水稻/脐橙",
+    poolSize: 185000,
+    position: { top: "72%", left: "70%" },
+  },
+  {
+    id: "yancheng",
+    city: "盐城",
+    province: "江苏",
+    shortProvince: "苏",
+    weather: "sunny",
+    weatherStatus: "晴朗",
+    crop: "水稻",
+    poolSize: 295000,
+    position: { top: "52%", left: "78%" },
+  },
+  // 华南/西部组
   {
     id: "zhanjiang",
     city: "湛江",
@@ -126,7 +207,40 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "台风预警",
     crop: "糖蔗/水稻",
     poolSize: 145000,
-    position: { top: "88%", left: "65%" },
+    position: { top: "86%", left: "66%" },
+  },
+  {
+    id: "maoming",
+    city: "茂名",
+    province: "广东",
+    shortProvince: "粤",
+    weather: "typhoon",
+    weatherStatus: "台风预警",
+    crop: "荔枝/水稻",
+    poolSize: 135000,
+    position: { top: "83%", left: "68%" },
+  },
+  {
+    id: "nanning",
+    city: "南宁",
+    province: "广西",
+    shortProvince: "桂",
+    weather: "rain",
+    weatherStatus: "小雨",
+    crop: "甘蔗/水稻",
+    poolSize: 175000,
+    position: { top: "80%", left: "61%" },
+  },
+  {
+    id: "akesu",
+    city: "阿克苏",
+    province: "新疆",
+    shortProvince: "新",
+    weather: "sunny",
+    weatherStatus: "晴朗",
+    crop: "棉花/苹果",
+    poolSize: 220000,
+    position: { top: "42%", left: "22%" },
   },
 ];
 
@@ -227,13 +341,14 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
               className={`absolute inset-0 w-7 h-7 rounded-full ${weatherPingColors[city.weather]} animate-[ping-slow_3s_ease-in-out_infinite]`}
             />
             
-            {/* Main hotspot button */}
+            {/* Main hotspot button with drop-shadow */}
             <button
               className={`relative w-7 h-7 rounded-full cursor-pointer
                 transition-all duration-300 border-[1.5px] backdrop-blur-sm
                 ${weatherBgColors[city.weather]} ${weatherBorderColors[city.weather]}
                 hover:scale-125 hover:shadow-lg
                 flex items-center justify-center z-10
+                drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]
               `}
               onMouseEnter={() => setHoveredHotspot(city)}
               onMouseLeave={() => setHoveredHotspot(null)}
