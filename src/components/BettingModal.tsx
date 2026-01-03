@@ -71,13 +71,10 @@ const BettingModal = ({
   // Weather is determined by the market (set by admin)
   const marketWeather = market?.weather_condition || "sunny";
 
-  // Fetch user's betting history for this market
+  // Fetch user's betting history for this market (by wallet address)
   useEffect(() => {
     const fetchUserBets = async () => {
-      if (!open || !market) return;
-      
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      if (!open || !market || !wallet.address) {
         setUserBets([]);
         return;
       }
@@ -87,7 +84,7 @@ const BettingModal = ({
         .from("bets")
         .select("id, position, amount, created_at, status")
         .eq("market_id", market.id)
-        .eq("user_id", user.id)
+        .eq("wallet_address", wallet.address)
         .order("created_at", { ascending: false });
 
       setUserBets(bets || []);
@@ -95,7 +92,7 @@ const BettingModal = ({
     };
 
     fetchUserBets();
-  }, [open, market]);
+  }, [open, market, wallet.address]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -134,20 +131,8 @@ const BettingModal = ({
   const handleConfirm = async () => {
     if (numAmount <= 0 || !yesNoChoice) return;
 
-    // Check if user is logged in
-    const { data: { user } } = await supabase.auth.getUser();
-    
-    if (!user) {
-      toast({
-        title: "请先登录",
-        description: "您需要登录后才能下注",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Check wallet connection
-    if (!wallet.isConnected) {
+    // Check wallet connection (no login required)
+    if (!wallet.isConnected || !wallet.address) {
       setPaymentStep("wallet");
       return;
     }
@@ -195,7 +180,7 @@ const BettingModal = ({
       // Position format: "weather_yesno" e.g., "sunny_yes", "rain_no"
       const positionWithWeather = `${marketWeather}_${stance}`;
       const { error: betError } = await supabase.from("bets").insert({
-        user_id: user.id,
+        wallet_address: wallet.address,
         market_id: market.id,
         position: positionWithWeather,
         amount: numAmount,
@@ -223,20 +208,6 @@ const BettingModal = ({
       await supabase.from("markets").update({
         charity_contribution: market.yes_pool + market.no_pool + numAmount
       }).eq("id", market.id);
-
-      // Update user profile with wallet address if not set
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("wallet_address")
-        .eq("user_id", user.id)
-        .single();
-
-      if (!profile?.wallet_address && wallet.address) {
-        await supabase
-          .from("profiles")
-          .update({ wallet_address: wallet.address })
-          .eq("user_id", user.id);
-      }
 
       setPaymentStep("complete");
 

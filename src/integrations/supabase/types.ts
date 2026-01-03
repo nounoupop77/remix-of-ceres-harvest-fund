@@ -23,7 +23,8 @@ export type Database = {
           payout: number | null
           position: string
           status: string
-          user_id: string
+          user_id: string | null
+          wallet_address: string | null
         }
         Insert: {
           amount: number
@@ -33,7 +34,8 @@ export type Database = {
           payout?: number | null
           position: string
           status?: string
-          user_id: string
+          user_id?: string | null
+          wallet_address?: string | null
         }
         Update: {
           amount?: number
@@ -43,7 +45,8 @@ export type Database = {
           payout?: number | null
           position?: string
           status?: string
-          user_id?: string
+          user_id?: string | null
+          wallet_address?: string | null
         }
         Relationships: [
           {
