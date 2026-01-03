@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Sun, CloudRain, Flame, Waves, Wind } from "lucide-react";
+import { useState, useRef } from "react";
+import { Sun, CloudRain, Flame, Waves, Wind, Move } from "lucide-react";
 import chinaFarmlandMap from "@/assets/china-farmland-map.png";
 
 export type WeatherType = "sunny" | "rain" | "drought" | "flood" | "typhoon";
@@ -299,9 +299,15 @@ interface ChinaMapProps {
 
 const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
   const [hoveredHotspot, setHoveredHotspot] = useState<CityHotspot | null>(null);
+  const [devMode, setDevMode] = useState(false);
+  const [hotspotPositions, setHotspotPositions] = useState<Record<string, { top: string; left: string }>>(
+    () => Object.fromEntries(cityHotspots.map(c => [c.id, c.position]))
+  );
+  const containerRef = useRef<HTMLDivElement>(null);
+  const draggingRef = useRef<string | null>(null);
 
   const handleCityClick = (city: CityHotspot) => {
-    // Convert to Province format for backwards compatibility
+    if (devMode) return; // Don't open modal in dev mode
     const province: Province = {
       id: city.id,
       name: city.city,
@@ -312,10 +318,59 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
     onProvinceClick(province);
   };
 
+  const handleMouseDown = (cityId: string) => {
+    if (!devMode) return;
+    draggingRef.current = cityId;
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!devMode || !draggingRef.current || !containerRef.current) return;
+    
+    const rect = containerRef.current.getBoundingClientRect();
+    const left = ((e.clientX - rect.left) / rect.width) * 100;
+    const top = ((e.clientY - rect.top) / rect.height) * 100;
+    
+    setHotspotPositions(prev => ({
+      ...prev,
+      [draggingRef.current!]: { 
+        top: `${Math.max(0, Math.min(100, top)).toFixed(1)}%`, 
+        left: `${Math.max(0, Math.min(100, left)).toFixed(1)}%` 
+      }
+    }));
+  };
+
+  const handleMouseUp = () => {
+    if (draggingRef.current && devMode) {
+      // Output all positions to console
+      console.log("📍 当前热点坐标：");
+      console.log(JSON.stringify(hotspotPositions, null, 2));
+    }
+    draggingRef.current = null;
+  };
+
   return (
     <div className="relative w-full flex justify-center">
+      {/* Dev Mode Toggle */}
+      <button
+        onClick={() => setDevMode(!devMode)}
+        className={`absolute top-2 right-2 z-50 px-3 py-1.5 rounded-lg text-xs font-medium transition-all flex items-center gap-1.5
+          ${devMode 
+            ? 'bg-accent text-accent-foreground shadow-lg' 
+            : 'bg-muted/50 text-muted-foreground hover:bg-muted'
+          }`}
+      >
+        <Move className="w-3 h-3" />
+        {devMode ? '拖拽模式 ON' : '调试'}
+      </button>
+
       {/* Map Container */}
-      <div className="relative w-full max-w-[65rem] aspect-[4/3]">
+      <div 
+        ref={containerRef}
+        className={`relative w-full max-w-[65rem] aspect-[4/3] ${devMode ? 'cursor-crosshair' : ''}`}
+        onMouseMove={handleMouseMove}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseUp}
+      >
         {/* Background Map Image with warm paper filter */}
         <img
           src={chinaFarmlandMap}
@@ -326,51 +381,64 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
         />
 
         {/* City Hotspots - Smaller with pulse animation */}
-        {cityHotspots.map((city) => (
-          <div
-            key={city.id}
-            className="absolute"
-            style={{
-              top: city.position.top,
-              left: city.position.left,
-              transform: "translate(-50%, -50%)",
-            }}
-          >
-            {/* Ping animation layer */}
-            <span
-              className={`absolute inset-0 w-7 h-7 rounded-full ${weatherPingColors[city.weather]} animate-[ping-slow_3s_ease-in-out_infinite]`}
-            />
-            
-            {/* Main hotspot button with drop-shadow */}
-            <button
-              className={`relative w-7 h-7 rounded-full cursor-pointer
-                transition-all duration-300 border-[1.5px] backdrop-blur-sm
-                ${weatherBgColors[city.weather]} ${weatherBorderColors[city.weather]}
-                hover:scale-125 hover:shadow-lg
-                flex items-center justify-center z-10
-                drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]
-              `}
-              onMouseEnter={() => setHoveredHotspot(city)}
-              onMouseLeave={() => setHoveredHotspot(null)}
-              onClick={() => handleCityClick(city)}
-              aria-label={`${city.city} - ${city.weatherStatus}`}
+        {cityHotspots.map((city) => {
+          const pos = hotspotPositions[city.id] || city.position;
+          return (
+            <div
+              key={city.id}
+              className={`absolute ${devMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+              style={{
+                top: pos.top,
+                left: pos.left,
+                transform: "translate(-50%, -50%)",
+              }}
+              onMouseDown={() => handleMouseDown(city.id)}
             >
-              {city.weather === "sunny" && <Sun className="w-3.5 h-3.5 text-foreground/80" />}
-              {city.weather === "rain" && <CloudRain className="w-3.5 h-3.5 text-foreground/80" />}
-              {city.weather === "drought" && <Flame className="w-3.5 h-3.5 text-foreground/80" />}
-              {city.weather === "flood" && <Waves className="w-3.5 h-3.5 text-foreground/80" />}
-              {city.weather === "typhoon" && <Wind className="w-3.5 h-3.5 text-foreground/80" />}
-            </button>
-          </div>
-        ))}
+              {/* Ping animation layer */}
+              {!devMode && (
+                <span
+                  className={`absolute inset-0 w-7 h-7 rounded-full ${weatherPingColors[city.weather]} animate-[ping-slow_3s_ease-in-out_infinite]`}
+                />
+              )}
+              
+              {/* Main hotspot button with drop-shadow */}
+              <button
+                className={`relative w-7 h-7 rounded-full
+                  transition-all duration-300 border-[1.5px] backdrop-blur-sm
+                  ${weatherBgColors[city.weather]} ${weatherBorderColors[city.weather]}
+                  ${devMode ? 'ring-2 ring-accent ring-offset-1' : 'hover:scale-125 hover:shadow-lg cursor-pointer'}
+                  flex items-center justify-center z-10
+                  drop-shadow-[0_2px_4px_rgba(0,0,0,0.25)]
+                `}
+                onMouseEnter={() => !devMode && setHoveredHotspot(city)}
+                onMouseLeave={() => setHoveredHotspot(null)}
+                onClick={() => handleCityClick(city)}
+                aria-label={`${city.city} - ${city.weatherStatus}`}
+              >
+                {city.weather === "sunny" && <Sun className="w-3.5 h-3.5 text-foreground/80" />}
+                {city.weather === "rain" && <CloudRain className="w-3.5 h-3.5 text-foreground/80" />}
+                {city.weather === "drought" && <Flame className="w-3.5 h-3.5 text-foreground/80" />}
+                {city.weather === "flood" && <Waves className="w-3.5 h-3.5 text-foreground/80" />}
+                {city.weather === "typhoon" && <Wind className="w-3.5 h-3.5 text-foreground/80" />}
+              </button>
+              
+              {/* Dev mode label */}
+              {devMode && (
+                <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[8px] font-mono bg-background/90 px-1 rounded whitespace-nowrap">
+                  {city.city}
+                </span>
+              )}
+            </div>
+          );
+        })}
 
         {/* Tooltip */}
-        {hoveredHotspot && (
+        {hoveredHotspot && !devMode && (
           <div
             className="absolute z-50 pointer-events-none animate-fade-in"
             style={{
-              top: `calc(${hoveredHotspot.position.top} - 6%)`,
-              left: hoveredHotspot.position.left,
+              top: `calc(${hotspotPositions[hoveredHotspot.id]?.top || hoveredHotspot.position.top} - 6%)`,
+              left: hotspotPositions[hoveredHotspot.id]?.left || hoveredHotspot.position.left,
               transform: "translateX(-50%)",
             }}
           >
