@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -8,7 +8,9 @@ import {
   XCircle,
   Loader2,
   Calendar,
+  MapPin,
 } from "lucide-react";
+import chinaFarmlandMap from "@/assets/china-farmland-map.png";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -353,28 +355,60 @@ const AdminMarketsTab = () => {
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2">
+                  <MapPin className="w-4 h-4" />
                   地图坐标
-                  <span className="text-xs text-muted-foreground">(填写后将在地图上显示)</span>
+                  <span className="text-xs text-muted-foreground">(点击地图选择位置)</span>
                 </Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Input
-                    placeholder="Top %（如 45.5%）"
-                    value={formData.position_top}
-                    onChange={(e) =>
-                      setFormData({ ...formData, position_top: e.target.value })
-                    }
+                <div 
+                  className="relative w-full aspect-[4/3] border border-border rounded-lg overflow-hidden cursor-crosshair bg-muted/30"
+                  onClick={(e) => {
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    setFormData({
+                      ...formData,
+                      position_top: `${y.toFixed(1)}%`,
+                      position_left: `${x.toFixed(1)}%`,
+                    });
+                  }}
+                >
+                  <img
+                    src={chinaFarmlandMap}
+                    alt="China Map"
+                    className="w-full h-full object-contain"
+                    draggable={false}
                   />
-                  <Input
-                    placeholder="Left %（如 65.2%）"
-                    value={formData.position_left}
-                    onChange={(e) =>
-                      setFormData({ ...formData, position_left: e.target.value })
-                    }
-                  />
+                  {formData.position_top && formData.position_left && (
+                    <div
+                      className="absolute w-6 h-6 -translate-x-1/2 -translate-y-1/2 bg-primary rounded-full border-2 border-background shadow-lg flex items-center justify-center"
+                      style={{
+                        top: formData.position_top,
+                        left: formData.position_left,
+                      }}
+                    >
+                      <MapPin className="w-3 h-3 text-primary-foreground" />
+                    </div>
+                  )}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  坐标示例：深圳约为 Top: 77%, Left: 68%
-                </p>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>当前坐标：</span>
+                  <span className="font-mono">
+                    {formData.position_top && formData.position_left 
+                      ? `Top: ${formData.position_top}, Left: ${formData.position_left}`
+                      : "未选择"}
+                  </span>
+                  {formData.position_top && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 px-2 text-xs"
+                      onClick={() => setFormData({ ...formData, position_top: "", position_left: "" })}
+                    >
+                      清除
+                    </Button>
+                  )}
+                </div>
               </div>
               <Button type="submit" variant="wallet" className="w-full">
                 {editingMarket ? "保存修改" : "创建"}
