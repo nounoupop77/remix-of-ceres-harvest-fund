@@ -79,12 +79,12 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
   return (
     <div className="relative w-full flex justify-center">
       {/* Map Container */}
-      <div className="relative w-full max-w-4xl aspect-[4/3]">
+      <div className="relative w-full max-w-[65rem] aspect-[4/3]">
         {/* Background Map Image */}
         <img
           src={chinaFarmlandMap}
           alt="China Farmland Map"
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain scale-[1.3] origin-center"
           draggable={false}
         />
 
