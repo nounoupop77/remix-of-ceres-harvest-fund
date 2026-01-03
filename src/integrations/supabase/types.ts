@@ -14,16 +14,202 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bets: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          market_id: string
+          payout: number | null
+          position: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          market_id: string
+          payout?: number | null
+          position: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          market_id?: string
+          payout?: number | null
+          position?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bets_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      charity_pool: {
+        Row: {
+          amount: number
+          created_at: string
+          distributed_at: string | null
+          id: string
+          market_id: string | null
+          recipient_address: string | null
+          recipient_name: string | null
+          status: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          distributed_at?: string | null
+          id?: string
+          market_id?: string | null
+          recipient_address?: string | null
+          recipient_name?: string | null
+          status?: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          distributed_at?: string | null
+          id?: string
+          market_id?: string | null
+          recipient_address?: string | null
+          recipient_name?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "charity_pool_market_id_fkey"
+            columns: ["market_id"]
+            isOneToOne: false
+            referencedRelation: "markets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      markets: {
+        Row: {
+          charity_contribution: number
+          city: string
+          created_at: string
+          description: string | null
+          end_date: string
+          id: string
+          no_pool: number
+          province: string
+          result: string | null
+          start_date: string
+          status: string
+          title: string
+          updated_at: string
+          weather_condition: string
+          yes_pool: number
+        }
+        Insert: {
+          charity_contribution?: number
+          city: string
+          created_at?: string
+          description?: string | null
+          end_date: string
+          id?: string
+          no_pool?: number
+          province: string
+          result?: string | null
+          start_date?: string
+          status?: string
+          title: string
+          updated_at?: string
+          weather_condition: string
+          yes_pool?: number
+        }
+        Update: {
+          charity_contribution?: number
+          city?: string
+          created_at?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          no_pool?: number
+          province?: string
+          result?: string | null
+          start_date?: string
+          status?: string
+          title?: string
+          updated_at?: string
+          weather_condition?: string
+          yes_pool?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          updated_at: string
+          user_id: string
+          wallet_address: string | null
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id: string
+          wallet_address?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          updated_at?: string
+          user_id?: string
+          wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +336,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

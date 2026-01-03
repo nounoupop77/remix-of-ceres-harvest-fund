@@ -1,0 +1,413 @@
+import { useState, useEffect } from "react";
+import { motion } from "framer-motion";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  CheckCircle,
+  XCircle,
+  Loader2,
+  Calendar,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+
+interface Market {
+  id: string;
+  title: string;
+  description: string | null;
+  city: string;
+  province: string;
+  weather_condition: string;
+  start_date: string;
+  end_date: string;
+  status: string;
+  result: string | null;
+  yes_pool: number;
+  no_pool: number;
+  charity_contribution: number;
+  created_at: string;
+}
+
+const AdminMarketsTab = () => {
+  const [markets, setMarkets] = useState<Market[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingMarket, setEditingMarket] = useState<Market | null>(null);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    city: "",
+    province: "",
+    weather_condition: "drought",
+    end_date: "",
+  });
+  const { toast } = useToast();
+
+  const fetchMarkets = async () => {
+    const { data, error } = await supabase
+      .from("markets")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast({
+        title: "获取失败",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      setMarkets(data || []);
+    }
+    setIsLoading(false);
+  };
+
+  useEffect(() => {
+    fetchMarkets();
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const payload = {
+      title: formData.title,
+      description: formData.description || null,
+      city: formData.city,
+      province: formData.province,
+      weather_condition: formData.weather_condition,
+      end_date: formData.end_date,
+    };
+
+    if (editingMarket) {
+      const { error } = await supabase
+        .from("markets")
+        .update(payload)
+        .eq("id", editingMarket.id);
+
+      if (error) {
+        toast({ title: "更新失败", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "更新成功" });
+        fetchMarkets();
+      }
+    } else {
+      const { error } = await supabase.from("markets").insert(payload);
+
+      if (error) {
+        toast({ title: "创建失败", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "创建成功" });
+        fetchMarkets();
+      }
+    }
+
+    setIsDialogOpen(false);
+    setEditingMarket(null);
+    setFormData({
+      title: "",
+      description: "",
+      city: "",
+      province: "",
+      weather_condition: "drought",
+      end_date: "",
+    });
+  };
+
+  const handleEdit = (market: Market) => {
+    setEditingMarket(market);
+    setFormData({
+      title: market.title,
+      description: market.description || "",
+      city: market.city,
+      province: market.province,
+      weather_condition: market.weather_condition,
+      end_date: market.end_date.split("T")[0],
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("确定删除此市场？")) return;
+
+    const { error } = await supabase.from("markets").delete().eq("id", id);
+
+    if (error) {
+      toast({ title: "删除失败", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "删除成功" });
+      fetchMarkets();
+    }
+  };
+
+  const handleSettle = async (marketId: string, result: "yes" | "no") => {
+    const { error } = await supabase
+      .from("markets")
+      .update({ status: "settled", result })
+      .eq("id", marketId);
+
+    if (error) {
+      toast({ title: "结算失败", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "结算成功" });
+      fetchMarkets();
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "active":
+        return <Badge variant="default" className="bg-accent">进行中</Badge>;
+      case "settled":
+        return <Badge variant="secondary">已结算</Badge>;
+      case "cancelled":
+        return <Badge variant="destructive">已取消</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
+  };
+
+  const weatherConditions = [
+    { value: "drought", label: "干旱" },
+    { value: "flood", label: "洪涝" },
+    { value: "frost", label: "霜冻" },
+    { value: "heatwave", label: "高温" },
+    { value: "storm", label: "暴风雨" },
+  ];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold text-foreground">博弈市场管理</h2>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button
+              variant="wallet"
+              size="sm"
+              className="gap-2"
+              onClick={() => {
+                setEditingMarket(null);
+                setFormData({
+                  title: "",
+                  description: "",
+                  city: "",
+                  province: "",
+                  weather_condition: "drought",
+                  end_date: "",
+                });
+              }}
+            >
+              <Plus className="w-4 h-4" />
+              创建市场
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>
+                {editingMarket ? "编辑市场" : "创建新市场"}
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="title">标题</Label>
+                <Input
+                  id="title"
+                  value={formData.title}
+                  onChange={(e) =>
+                    setFormData({ ...formData, title: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">描述</Label>
+                <Textarea
+                  id="description"
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="province">省份</Label>
+                  <Input
+                    id="province"
+                    value={formData.province}
+                    onChange={(e) =>
+                      setFormData({ ...formData, province: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="city">城市</Label>
+                  <Input
+                    id="city"
+                    value={formData.city}
+                    onChange={(e) =>
+                      setFormData({ ...formData, city: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="weather_condition">天气条件</Label>
+                <Select
+                  value={formData.weather_condition}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, weather_condition: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {weatherConditions.map((cond) => (
+                      <SelectItem key={cond.value} value={cond.value}>
+                        {cond.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end_date">结束日期</Label>
+                <Input
+                  id="end_date"
+                  type="date"
+                  value={formData.end_date}
+                  onChange={(e) =>
+                    setFormData({ ...formData, end_date: e.target.value })
+                  }
+                  required
+                />
+              </div>
+              <Button type="submit" variant="wallet" className="w-full">
+                {editingMarket ? "保存修改" : "创建"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <div className="bg-card/50 rounded-xl border border-border overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>标题</TableHead>
+              <TableHead>地区</TableHead>
+              <TableHead>天气</TableHead>
+              <TableHead>资金池</TableHead>
+              <TableHead>状态</TableHead>
+              <TableHead>操作</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {markets.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                  暂无市场数据
+                </TableCell>
+              </TableRow>
+            ) : (
+              markets.map((market) => (
+                <TableRow key={market.id}>
+                  <TableCell className="font-medium">{market.title}</TableCell>
+                  <TableCell>
+                    {market.province} · {market.city}
+                  </TableCell>
+                  <TableCell>{market.weather_condition}</TableCell>
+                  <TableCell>
+                    <div className="text-xs">
+                      <span className="text-accent">YES: ${market.yes_pool}</span>
+                      <br />
+                      <span className="text-destructive">NO: ${market.no_pool}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{getStatusBadge(market.status)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      {market.status === "active" && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleSettle(market.id, "yes")}
+                            title="结算 YES"
+                          >
+                            <CheckCircle className="w-4 h-4 text-accent" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleSettle(market.id, "no")}
+                            title="结算 NO"
+                          >
+                            <XCircle className="w-4 h-4 text-destructive" />
+                          </Button>
+                        </>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleEdit(market)}
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDelete(market.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+};
+
+export default AdminMarketsTab;
