@@ -19,6 +19,7 @@ const Index = () => {
   const [selectedMarket, setSelectedMarket] = useState<TrendingMarket | null>(null);
   const [showParticle, setShowParticle] = useState(false);
   const [charityPoolAmount, setCharityPoolAmount] = useState(0);
+  const [betRefreshTrigger, setBetRefreshTrigger] = useState(0);
   const charityButtonRef = useRef<HTMLButtonElement>(null);
 
   // Fetch total charity pool on load
@@ -76,6 +77,9 @@ const Index = () => {
   const handleBetConfirm = useCallback((amount: number) => {
     // Trigger the fund particle animation
     setShowParticle(true);
+    
+    // Refresh the bets list
+    setBetRefreshTrigger(prev => prev + 1);
     
     // Update charity pool after particle animation
     setTimeout(() => {
@@ -195,7 +199,7 @@ const Index = () => {
           onBetConfirm={handleBetConfirm}
         />
         <CharityDrawer open={charityOpen} onOpenChange={setCharityOpen} />
-        <HistoryDrawer open={historyOpen} onOpenChange={setHistoryOpen} />
+        <HistoryDrawer open={historyOpen} onOpenChange={setHistoryOpen} refreshTrigger={betRefreshTrigger} />
       </div>
     </>
   );
