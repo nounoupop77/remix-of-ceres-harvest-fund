@@ -16,7 +16,7 @@ export interface CityHotspot {
   position: { top: string; left: string };
 }
 
-// 20 city hotspots with precise geographic coordinates
+// 20 city hotspots with corrected geographic coordinates (shifted left & up)
 const cityHotspots: CityHotspot[] = [
   // 东北组 (黑土地)
   {
@@ -28,7 +28,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "春小麦",
     poolSize: 210000,
-    position: { top: "12%", left: "76%" },
+    position: { top: "16%", left: "65%" },
   },
   {
     id: "harbin",
@@ -39,7 +39,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "水稻/大豆",
     poolSize: 420000,
-    position: { top: "20%", left: "86%" },
+    position: { top: "24%", left: "72%" },
   },
   {
     id: "suihua",
@@ -50,7 +50,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "玉米/大豆",
     poolSize: 380000,
-    position: { top: "24%", left: "84%" },
+    position: { top: "21%", left: "70%" },
   },
   {
     id: "changchun",
@@ -61,7 +61,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "玉米",
     poolSize: 350000,
-    position: { top: "28%", left: "82%" },
+    position: { top: "28%", left: "70%" },
   },
   // 华北/中原组 (旱地之魂)
   {
@@ -73,7 +73,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "小麦",
     poolSize: 290000,
-    position: { top: "38%", left: "71%" },
+    position: { top: "40%", left: "58%" },
   },
   {
     id: "weifang",
@@ -84,7 +84,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "蔬菜/小麦",
     poolSize: 320000,
-    position: { top: "40%", left: "78%" },
+    position: { top: "41%", left: "64%" },
   },
   {
     id: "dezhou",
@@ -95,7 +95,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "小麦/玉米",
     poolSize: 280000,
-    position: { top: "42%", left: "74%" },
+    position: { top: "43%", left: "61%" },
   },
   {
     id: "zhumadian",
@@ -106,7 +106,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "干旱",
     crop: "小麦/玉米",
     poolSize: 456000,
-    position: { top: "48%", left: "69%" },
+    position: { top: "50%", left: "57%" },
   },
   {
     id: "nanyang",
@@ -117,7 +117,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "小麦",
     poolSize: 310000,
-    position: { top: "51%", left: "66%" },
+    position: { top: "53%", left: "55%" },
   },
   {
     id: "fuyang",
@@ -128,7 +128,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "小麦/水稻",
     poolSize: 275000,
-    position: { top: "53%", left: "72%" },
+    position: { top: "54%", left: "60%" },
   },
   // 南方/长江组 (水田带)
   {
@@ -140,7 +140,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻",
     poolSize: 156000,
-    position: { top: "60%", left: "52%" },
+    position: { top: "63%", left: "42%" },
   },
   {
     id: "xiangyang",
@@ -151,7 +151,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "小麦/水稻",
     poolSize: 245000,
-    position: { top: "56%", left: "65%" },
+    position: { top: "58%", left: "54%" },
   },
   {
     id: "changde",
@@ -162,7 +162,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "暴雨",
     crop: "水稻",
     poolSize: 198000,
-    position: { top: "64%", left: "64%" },
+    position: { top: "67%", left: "53%" },
   },
   {
     id: "shangrao",
@@ -173,7 +173,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻",
     poolSize: 165000,
-    position: { top: "66%", left: "73%" },
+    position: { top: "69%", left: "63%" },
   },
   {
     id: "ganzhou",
@@ -184,7 +184,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "水稻/脐橙",
     poolSize: 185000,
-    position: { top: "72%", left: "70%" },
+    position: { top: "75%", left: "59%" },
   },
   {
     id: "yancheng",
@@ -195,7 +195,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "水稻",
     poolSize: 295000,
-    position: { top: "52%", left: "78%" },
+    position: { top: "52%", left: "67%" },
   },
   // 华南/西部组
   {
@@ -207,7 +207,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "台风预警",
     crop: "糖蔗/水稻",
     poolSize: 145000,
-    position: { top: "86%", left: "66%" },
+    position: { top: "83%", left: "54%" },
   },
   {
     id: "maoming",
@@ -218,7 +218,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "台风预警",
     crop: "荔枝/水稻",
     poolSize: 135000,
-    position: { top: "83%", left: "68%" },
+    position: { top: "81%", left: "56%" },
   },
   {
     id: "nanning",
@@ -229,7 +229,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "小雨",
     crop: "甘蔗/水稻",
     poolSize: 175000,
-    position: { top: "80%", left: "61%" },
+    position: { top: "79%", left: "50%" },
   },
   {
     id: "akesu",
@@ -240,7 +240,7 @@ const cityHotspots: CityHotspot[] = [
     weatherStatus: "晴朗",
     crop: "棉花/苹果",
     poolSize: 220000,
-    position: { top: "42%", left: "22%" },
+    position: { top: "42%", left: "26%" },
   },
 ];
 
@@ -314,13 +314,13 @@ const ChinaMap = ({ onProvinceClick }: ChinaMapProps) => {
 
   return (
     <div className="relative w-full flex justify-center">
-      {/* Map Container */}
-      <div className="relative w-full max-w-[65rem] aspect-[4/3]">
+      {/* Map Container - narrowed to keep hotspots over land */}
+      <div className="relative w-full max-w-4xl aspect-[4/3]">
         {/* Background Map Image with warm paper filter */}
         <img
           src={chinaFarmlandMap}
           alt="China Farmland Map"
-          className="w-full h-full object-contain scale-[1.3] origin-center"
+          className="w-full h-full object-contain"
           style={{ filter: "brightness(0.96) sepia(0.05)" }}
           draggable={false}
         />
